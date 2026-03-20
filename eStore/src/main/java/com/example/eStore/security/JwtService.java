@@ -9,7 +9,7 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private final String SECRET = "estore-secret-key";
+    private final String SECRET = "zB4fG9xL2nP6rT8vY1mK3jH5sA7dQ9wE0nB2vC4xZ6mK8jL0fH2gS4dF6gH8jK9l";
 
     public String generateToken(String email) {
 
