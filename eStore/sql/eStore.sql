@@ -178,10 +178,10 @@ CREATE TABLE contacts (
 -- ROLES
 -- =============================
 INSERT INTO roles (id, name) VALUES
-(1,'ADMIN'),
-(2,'CUSTOMER'),
-(3,'SHIPPER'),
-(4,'STAFF');
+(1,'ROLE_ADMIN'),
+(2,'ROLE_CUSTOMER'),
+(3,'ROLE_SHIPPER'),
+(4,'ROLE_STAFF');
 
 -- =============================
 -- USERS

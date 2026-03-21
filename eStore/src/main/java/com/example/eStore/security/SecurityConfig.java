@@ -3,6 +3,7 @@ package com.example.eStore.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,22 +30,64 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                                // ===== PUBLIC =====
+                                .requestMatchers("/api/auth/**").permitAll()
 
-                        .requestMatchers("/api/auth/**").permitAll()
+                                // ===== PRODUCT =====
+                                .requestMatchers(HttpMethod.GET, "/api/products/**")
+                                .permitAll()
 
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/products/**")
+                                .hasAnyRole("ADMIN", "STAFF")
 
-                        .requestMatchers("/api/staff/**").hasRole("STAFF")
+                                .requestMatchers(HttpMethod.PUT, "/api/products/**")
+                                .hasAnyRole("ADMIN", "STAFF")
 
-                        .requestMatchers("/api/shipper/**").hasRole("SHIPPER")
+                                .requestMatchers(HttpMethod.DELETE, "/api/products/**")
+                                .hasRole("ADMIN")
 
-                        .requestMatchers("/api/customer/**")
-                        .hasRole("CUSTOMER")
+                                // ===== CATEGORY =====
+                                .requestMatchers(HttpMethod.GET, "/api/categories/**")
+                                .permitAll()
 
-                        .anyRequest().authenticated()
+                                .requestMatchers("/api/categories/**")
+                                .hasRole("ADMIN")
+
+                                // ===== BRAND =====
+                                .requestMatchers(HttpMethod.GET, "/api/brands/**")
+                                .permitAll()
+
+                                .requestMatchers("/api/brands/**")
+                                .hasRole("ADMIN")
+
+                                // ===== ADMIN =====
+                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                                // ===== STAFF =====
+                                .requestMatchers("/api/staff/**")
+                                .hasAnyRole("STAFF", "ADMIN")
+
+                                // ===== SHIPPER =====
+                                .requestMatchers("/api/shipper/**")
+                                .hasRole("SHIPPER")
+
+                                // ===== CUSTOMER =====
+                                .requestMatchers("/api/customer/**")
+                                .hasRole("CUSTOMER")
+
+                                // ===== ALL OTHER =====
+                                .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                        UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            res.sendError(401, "Unauthorized");
+                        })
+                        .accessDeniedHandler((req, res, e) -> {
+                            res.sendError(403, "Forbidden");
+                        }));
+
 
         return http.build();
     }
