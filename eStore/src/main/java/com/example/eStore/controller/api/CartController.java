@@ -1,4 +1,4 @@
-package com.example.eStore.controller;
+package com.example.eStore.controller.api;
 
 import com.example.eStore.dto.request.AddToCartRequest;
 import com.example.eStore.dto.request.UpdateCartItemRequest;
@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/customer/cart")
+@RequestMapping("/api/cart")
 @RequiredArgsConstructor
 public class CartController {
 
