@@ -1,9 +1,11 @@
 package com.example.eStore.controller.api;
 
+import com.example.eStore.dto.BaseResultDTO;
 import com.example.eStore.dto.request.AddToCartRequest;
 import com.example.eStore.dto.request.UpdateCartItemRequest;
 import com.example.eStore.service.CartService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,20 +21,20 @@ public class CartController {
     }
 
     @PostMapping("/add")
-    public void add(@RequestBody AddToCartRequest request) {
-        cartService.addToCart(getUserId(), request);
+    public ResponseEntity<BaseResultDTO<Void>> add(@RequestBody AddToCartRequest request) {
+        return ResponseEntity.ok(cartService.addToCart(getUserId(), request));
     }
 
     @PutMapping("/item/{id}")
-    public void update(
+    public ResponseEntity<BaseResultDTO<Void>> update(
             @PathVariable Long id,
             @RequestBody UpdateCartItemRequest request) {
 
-        cartService.updateCartItem(id, request.getQuantity());
+        return ResponseEntity.ok(cartService.updateCartItem(id, request.getQuantity()));
     }
 
     @DeleteMapping("/item/{id}")
-    public void remove(@PathVariable Long id) {
-        cartService.removeItem(id);
+    public ResponseEntity<BaseResultDTO<Void>> remove(@PathVariable Long id) {
+        return ResponseEntity.ok(cartService.removeItem(id));
     }
 }

@@ -1,10 +1,14 @@
 package com.example.eStore.service;
 
 import com.example.eStore.dto.AuthResponse;
+import com.example.eStore.dto.BaseResultDTO;
 import com.example.eStore.dto.LoginRequest;
 import com.example.eStore.dto.RegisterRequest;
+import com.example.eStore.dto.constants.Constants;
+import com.example.eStore.dto.response.ApiResponseFactory;
 import com.example.eStore.entity.Role;
 import com.example.eStore.entity.User;
+import com.example.eStore.exception.AppException;
 import com.example.eStore.repository.RoleRepository;
 import com.example.eStore.repository.UserRepository;
 import com.example.eStore.security.JwtService;
@@ -23,10 +27,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public void register(RegisterRequest request) {
+    public BaseResultDTO<Void> register(RegisterRequest request) {
 
-        if (userRepository.existsByEmail(request.getEmail()))
-            throw new RuntimeException("Email existed");
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(
+                    "Email existed",
+                    Constants.ErrorCode.User.REGISTER_EMAIL_EXISTS
+            );
+        }
 
         User user = new User();
 
@@ -35,25 +43,40 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         Role role =
-                roleRepository.findByName("CUSTOMER").orElseThrow();
+                roleRepository.findByName("CUSTOMER")
+                        .orElseThrow(() -> new AppException(
+                                "Customer role not found",
+                                Constants.ErrorCode.User.REGISTER_ROLE_NOT_FOUND
+                        ));
 
         user.setRoles(Set.of(role));
 
         userRepository.save(user);
+        return ApiResponseFactory.success(Constants.Message.Auth.REGISTER_SUCCESS);
     }
 
-    public AuthResponse login(LoginRequest request) {
+    public BaseResultDTO<AuthResponse> login(LoginRequest request) {
 
         User user =
                 userRepository.findByEmail(request.getEmail())
-                        .orElseThrow();
+                        .orElseThrow(() -> new AppException(
+                                "Email not found",
+                                Constants.ErrorCode.User.LOGIN_EMAIL_NOT_FOUND
+                        ));
 
         if (!passwordEncoder.matches(request.getPassword(),
-                user.getPassword()))
-            throw new RuntimeException("Invalid password");
+                user.getPassword())) {
+            throw new AppException(
+                    "Invalid password",
+                    Constants.ErrorCode.User.LOGIN_INVALID_PASSWORD
+            );
+        }
 
         String token = jwtService.generateToken(user.getEmail());
 
-        return new AuthResponse(token);
+        return ApiResponseFactory.success(
+                Constants.Message.Auth.LOGIN_SUCCESS,
+                new AuthResponse(token)
+        );
     }
 }

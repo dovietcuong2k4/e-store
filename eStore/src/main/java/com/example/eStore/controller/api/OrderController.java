@@ -1,9 +1,11 @@
 package com.example.eStore.controller.api;
 
+import com.example.eStore.dto.BaseResultDTO;
 import com.example.eStore.dto.request.CreateOrderRequest;
 import com.example.eStore.entity.Order;
 import com.example.eStore.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,12 +22,12 @@ public class OrderController {
     }
 
     @PostMapping
-    public void create(@RequestBody CreateOrderRequest request) {
-        orderService.createOrder(getUserId(), request);
+    public ResponseEntity<BaseResultDTO<Void>> create(@RequestBody CreateOrderRequest request) {
+        return ResponseEntity.ok(orderService.createOrder(getUserId(), request));
     }
 
     @GetMapping
-    public List<Order> getOrders() {
-        return orderService.getUserOrders(getUserId());
+    public ResponseEntity<BaseResultDTO<List<Order>>> getOrders() {
+        return ResponseEntity.ok(orderService.getUserOrders(getUserId()));
     }
 }

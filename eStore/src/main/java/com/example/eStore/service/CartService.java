@@ -1,9 +1,13 @@
 package com.example.eStore.service;
 
+import com.example.eStore.dto.BaseResultDTO;
+import com.example.eStore.dto.constants.Constants;
 import com.example.eStore.dto.request.AddToCartRequest;
+import com.example.eStore.dto.response.ApiResponseFactory;
 import com.example.eStore.entity.Cart;
 import com.example.eStore.entity.CartItem;
 import com.example.eStore.entity.Product;
+import com.example.eStore.exception.AppException;
 import com.example.eStore.repository.CartItemRepository;
 import com.example.eStore.repository.CartRepository;
 import com.example.eStore.repository.ProductRepository;
@@ -22,13 +26,16 @@ public class CartService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
-    public void addToCart(Long userId, AddToCartRequest request) {
+    public BaseResultDTO<Void> addToCart(Long userId, AddToCartRequest request) {
 
         Cart cart = getOrCreateCart(userId);
 
         Product product = productRepository
                 .findById(request.getProductId())
-                .orElseThrow();
+                .orElseThrow(() -> new AppException(
+                        "Product not found",
+                        Constants.ErrorCode.Cart.ADD_PRODUCT_NOT_FOUND
+                ));
 
         Optional<CartItem> optionalItem =
                 cartItemRepository.findByCartIdAndProductId(
@@ -50,28 +57,39 @@ public class CartService {
         cartItemRepository.save(item);
 
         recalculateCart(cart);
+        return ApiResponseFactory.success(Constants.Message.Cart.ADD_SUCCESS);
     }
 
-    public void updateCartItem(Long itemId, Integer quantity) {
+    public BaseResultDTO<Void> updateCartItem(Long itemId, Integer quantity) {
 
-        CartItem item = cartItemRepository.findById(itemId).orElseThrow();
+        CartItem item = cartItemRepository.findById(itemId)
+                .orElseThrow(() -> new AppException(
+                        "Cart item not found",
+                        Constants.ErrorCode.Cart.UPDATE_ITEM_NOT_FOUND
+                ));
 
         item.setQuantity(quantity);
 
         cartItemRepository.save(item);
 
         recalculateCart(item.getCart());
+        return ApiResponseFactory.success(Constants.Message.Cart.UPDATE_SUCCESS);
     }
 
-    public void removeItem(Long itemId) {
+    public BaseResultDTO<Void> removeItem(Long itemId) {
 
-        CartItem item = cartItemRepository.findById(itemId).orElseThrow();
+        CartItem item = cartItemRepository.findById(itemId)
+                .orElseThrow(() -> new AppException(
+                        "Cart item not found",
+                        Constants.ErrorCode.Cart.REMOVE_ITEM_NOT_FOUND
+                ));
 
         Cart cart = item.getCart();
 
         cartItemRepository.delete(item);
 
         recalculateCart(cart);
+        return ApiResponseFactory.success(Constants.Message.Cart.REMOVE_SUCCESS);
     }
 
 
@@ -81,7 +99,11 @@ public class CartService {
         return cartRepository.findByUserId(userId)
                 .orElseGet(() -> {
                     Cart cart = new Cart();
-                    cart.setUser(userRepository.findById(userId).orElseThrow());
+                    cart.setUser(userRepository.findById(userId)
+                            .orElseThrow(() -> new AppException(
+                                    "User not found",
+                                    Constants.ErrorCode.Cart.ADD_USER_NOT_FOUND
+                            )));
                     cart.setTotalPrice(0L);
                     return cartRepository.save(cart);
                 });
