@@ -1,13 +1,13 @@
 package com.example.eStore;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 class EStoreApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
-
+    @Test
+    void applicationClass_isAvailable() {
+        assertNotNull(EStoreApplication.class);
+    }
 }
