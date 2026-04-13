@@ -3,6 +3,8 @@ package com.example.eStore.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "products")
 @Data
@@ -34,4 +36,7 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "brand_id")
     private Brand brand;
+
+    @OneToMany(mappedBy = "product")
+    private List<ProductImage> images;
 }

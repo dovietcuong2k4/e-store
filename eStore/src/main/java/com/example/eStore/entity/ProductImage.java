@@ -3,20 +3,23 @@ package com.example.eStore.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
-
 @Entity
-@Table(name = "brands")
+@Table(name = "product_images")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Brand {
+@Builder
+public class ProductImage {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
-    private String imageUrl;
 
-    @OneToMany(mappedBy = "brand")
-    private List<Product> products;
+    private String imageUrl;
+    private Boolean isThumbnail;
+    private Integer sortOrder;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
 }

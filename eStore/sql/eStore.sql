@@ -298,3 +298,19 @@ INSERT INTO contacts
 (id,email,message,reply_message,contact_date,reply_date,status,responder_id)
 VALUES
 (1,'customer@gmail.com','I need support',NULL,'2024-01-10 09:00:00',NULL,'NEW',NULL);
+
+
+ALTER TABLE brands
+ADD COLUMN image_url VARCHAR(500);
+
+CREATE TABLE product_images (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    is_thumbnail BOOLEAN DEFAULT FALSE,
+    sort_order INT DEFAULT 0,
+
+    CONSTRAINT fk_product_images_product
+        FOREIGN KEY (product_id) REFERENCES products(id)
+        ON DELETE CASCADE
+);
