@@ -4,6 +4,8 @@ import com.example.eStore.dto.BaseResultDTO;
 import com.example.eStore.dto.constants.Constants;
 import com.example.eStore.dto.request.AddToCartRequest;
 import com.example.eStore.dto.response.ApiResponseFactory;
+import com.example.eStore.dto.response.CartItemResponse;
+import com.example.eStore.dto.response.CartResponse;
 import com.example.eStore.entity.Cart;
 import com.example.eStore.entity.CartItem;
 import com.example.eStore.entity.Product;
@@ -92,6 +94,32 @@ public class CartService {
         return ApiResponseFactory.success(Constants.Message.Cart.REMOVE_SUCCESS);
     }
 
+    public BaseResultDTO<CartResponse> getCart(Long userId) {
+
+        Cart cart = getOrCreateCart(userId);
+
+        List<CartItem> items =
+                cartItemRepository.findByCartId(cart.getId());
+
+        List<CartItemResponse> itemResponses = items.stream()
+                .map(item -> CartItemResponse.builder()
+                        .id(item.getId())
+                        .productId(item.getProduct().getId())
+                        .productName(item.getProduct().getName())
+                        .productPrice(item.getProduct().getPrice())
+                        .quantity(item.getQuantity())
+                        .build())
+                .toList();
+
+        CartResponse response = CartResponse.builder()
+                .id(cart.getId())
+                .userId(userId)
+                .totalPrice(cart.getTotalPrice())
+                .items(itemResponses)
+                .build();
+
+        return ApiResponseFactory.success(Constants.Message.Cart.GET_CART_SUCCESS, response);
+    }
 
 
     private Cart getOrCreateCart(Long userId) {

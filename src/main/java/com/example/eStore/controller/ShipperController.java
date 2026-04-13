@@ -19,11 +19,25 @@ public class ShipperController {
 
     @PutMapping("orders/shipping/{id}")
     public ResponseEntity<BaseResultDTO<Void>> shipping(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.updateStatus(id, Constants.OrderStatus.SHIPPING));
+        return ResponseEntity.ok(
+                orderService.updateStatus(id, Constants.OrderStatus.SHIPPING, Constants.Role.SHIPPER));
+    }
+
+    @PutMapping("orders/delivered/{id}")
+    public ResponseEntity<BaseResultDTO<Void>> delivered(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                orderService.updateStatus(id, Constants.OrderStatus.DELIVERED, Constants.Role.SHIPPER));
+    }
+
+    @PutMapping("orders/delivery-failed/{id}")
+    public ResponseEntity<BaseResultDTO<Void>> deliveryFailed(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                orderService.updateStatus(id, Constants.OrderStatus.DELIVERY_FAILED, Constants.Role.SHIPPER));
     }
 
     @PutMapping("orders/complete/{id}")
     public ResponseEntity<BaseResultDTO<Void>> complete(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.updateStatus(id, Constants.OrderStatus.COMPLETED));
+        return ResponseEntity.ok(
+                orderService.updateStatus(id, Constants.OrderStatus.DELIVERED, Constants.Role.SHIPPER));
     }
 }

@@ -3,6 +3,7 @@ package com.example.eStore.controller.api;
 import com.example.eStore.dto.BaseResultDTO;
 import com.example.eStore.dto.request.AddToCartRequest;
 import com.example.eStore.dto.request.UpdateCartItemRequest;
+import com.example.eStore.dto.response.CartResponse;
 import com.example.eStore.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +16,17 @@ public class CartController {
 
     private final CartService cartService;
 
-    // giả lập userId = 2
-    private Long getUserId() {
-        return 2L;
+    @PostMapping("/add")
+    public ResponseEntity<BaseResultDTO<Void>> add(
+            @RequestParam Long userId,
+            @RequestBody AddToCartRequest request) {
+
+        return ResponseEntity.ok(cartService.addToCart(userId, request));
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<BaseResultDTO<Void>> add(@RequestBody AddToCartRequest request) {
-        return ResponseEntity.ok(cartService.addToCart(getUserId(), request));
+    @GetMapping
+    public ResponseEntity<BaseResultDTO<CartResponse>> getCart(@RequestParam Long userId) {
+        return ResponseEntity.ok(cartService.getCart(userId));
     }
 
     @PutMapping("/item/{id}")

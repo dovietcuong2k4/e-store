@@ -3,9 +3,20 @@ package com.example.eStore.dto.constants;
 public interface Constants {
     interface OrderStatus {
         String CREATED = "CREATED";
-        String PENDING = "PENDING";
+        String CONFIRMED = "CONFIRMED";
+        String PREPARING = "PREPARING";
+        String READY_FOR_SHIPPING = "READY_FOR_SHIPPING";
         String SHIPPING = "SHIPPING";
-        String COMPLETED = "COMPLETED";
+        String DELIVERED = "DELIVERED";
+        String DELIVERY_FAILED = "DELIVERY_FAILED";
+        String CANCELLED = "CANCELLED";
+    }
+
+    interface Role {
+        String ADMIN = "ADMIN";
+        String STAFF = "STAFF";
+        String SHIPPER = "SHIPPER";
+        String CUSTOMER = "CUSTOMER";
     }
 
     interface ErrorCode {
@@ -51,14 +62,19 @@ public interface Constants {
             String ADD_SUCCESS = "Add to cart successfully";
             String UPDATE_SUCCESS = "Update cart item successfully";
             String REMOVE_SUCCESS = "Remove cart item successfully";
+            String GET_CART_SUCCESS = "Get cart successfully";
         }
 
         interface Order {
             String CREATE_SUCCESS = "Create order successfully";
             String GET_SUCCESS = "Get orders successfully";
             String CONFIRM_SUCCESS = "Order confirmed successfully";
+            String PREPARING_SUCCESS = "Order is being prepared";
+            String READY_SUCCESS = "Order is ready for shipping";
             String SHIPPING_SUCCESS = "Order is now shipping";
-            String COMPLETE_SUCCESS = "Order completed successfully";
+            String DELIVERY_SUCCESS = "Order delivered successfully";
+            String DELIVERY_FAILED = "Delivery failed";
+            String CANCEL_SUCCESS = "Order cancelled successfully";
         }
 
         interface Product {
