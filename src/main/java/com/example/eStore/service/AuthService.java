@@ -43,6 +43,8 @@ public class AuthService {
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPhone(request.getPhone());
+        user.setAddress(request.getAddress());
 
         Role role =
                 roleRepository.findByName("CUSTOMER")
