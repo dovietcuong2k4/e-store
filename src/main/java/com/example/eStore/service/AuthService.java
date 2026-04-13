@@ -6,6 +6,7 @@ import com.example.eStore.dto.LoginRequest;
 import com.example.eStore.dto.RegisterRequest;
 import com.example.eStore.dto.constants.Constants;
 import com.example.eStore.dto.response.ApiResponseFactory;
+import com.example.eStore.dto.response.UserResponse;
 import com.example.eStore.entity.Role;
 import com.example.eStore.entity.User;
 import com.example.eStore.exception.AppException;
@@ -17,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -76,7 +78,20 @@ public class AuthService {
 
         return ApiResponseFactory.success(
                 Constants.Message.Auth.LOGIN_SUCCESS,
-                new AuthResponse(token)
+                new AuthResponse(token, toUserResponse(user))
         );
+    }
+
+    private UserResponse toUserResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .address(user.getAddress())
+                .roles(user.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toSet()))
+                .build();
     }
 }
