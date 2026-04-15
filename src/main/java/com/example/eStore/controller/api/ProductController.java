@@ -33,6 +33,11 @@ public class ProductController {
                 PageRequest.of(page, size)));
     }
 
+    @GetMapping("/detail/{id}")
+    public ResponseEntity<BaseResultDTO<ProductResponse>> getDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getDetail(id));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<BaseResultDTO<ProductResponse>> update(
             @PathVariable Long id,

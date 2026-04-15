@@ -1,5 +1,6 @@
 package com.example.eStore.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,5 +19,6 @@ public class Brand {
     private String imageUrl;
 
     @OneToMany(mappedBy = "brand")
+    @JsonManagedReference
     private List<Product> products;
 }

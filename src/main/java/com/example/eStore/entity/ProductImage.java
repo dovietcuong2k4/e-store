@@ -18,6 +18,7 @@ public class ProductImage {
     private String imageUrl;
     private Boolean isThumbnail;
     private Integer sortOrder;
+    private String publicId;
 
     @ManyToOne
     @JoinColumn(name = "product_id")

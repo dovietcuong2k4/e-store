@@ -47,6 +47,7 @@ public interface Constants {
         interface Product {
             String CREATE_CATEGORY_NOT_FOUND = "PRODUCT_CREATE_CATEGORY_NOT_FOUND";
             String CREATE_BRAND_NOT_FOUND = "PRODUCT_CREATE_BRAND_NOT_FOUND";
+            String GET_DETAIL_NOT_FOUND = "PRODUCT_GET_DETAIL_NOT_FOUND";
             String UPDATE_NOT_FOUND = "PRODUCT_UPDATE_NOT_FOUND";
             String DELETE_NOT_FOUND = "PRODUCT_DELETE_NOT_FOUND";
         }
@@ -80,6 +81,7 @@ public interface Constants {
         interface Product {
             String CREATE_SUCCESS = "Create product successfully";
             String GET_SUCCESS = "Get products successfully";
+            String GET_DETAIL_SUCCESS = "Get product detail successfully";
             String UPDATE_SUCCESS = "Update product successfully";
             String DELETE_SUCCESS = "Delete product successfully";
         }

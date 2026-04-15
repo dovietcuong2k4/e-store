@@ -4,10 +4,12 @@ import com.example.eStore.dto.BaseResultDTO;
 import com.example.eStore.dto.constants.Constants;
 import com.example.eStore.dto.request.ProductRequest;
 import com.example.eStore.dto.response.ApiResponseFactory;
+import com.example.eStore.dto.response.ProductImageResponse;
 import com.example.eStore.dto.response.ProductResponse;
 import com.example.eStore.entity.Brand;
 import com.example.eStore.entity.Category;
 import com.example.eStore.entity.Product;
+import com.example.eStore.entity.ProductImage;
 import com.example.eStore.exception.AppException;
 import com.example.eStore.repository.BrandRepository;
 import com.example.eStore.repository.CategoryRepository;
@@ -16,6 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -70,6 +75,19 @@ public class ProductService {
         );
     }
 
+    public BaseResultDTO<ProductResponse> getDetail(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new AppException(
+                        "Product not found",
+                        Constants.ErrorCode.Product.GET_DETAIL_NOT_FOUND
+                ));
+
+        return ApiResponseFactory.success(
+                Constants.Message.Product.GET_DETAIL_SUCCESS,
+                mapToResponse(product)
+        );
+    }
+
     public BaseResultDTO<ProductResponse> update(Long id, ProductRequest request) {
 
         Product product = productRepository.findById(id)
@@ -102,12 +120,28 @@ public class ProductService {
     }
 
     private ProductResponse mapToResponse(Product p) {
+        List<ProductImageResponse> images = p.getImages() == null
+                ? List.of()
+                : p.getImages().stream()
+                .sorted(Comparator.comparing(
+                        ProductImage::getSortOrder,
+                        Comparator.nullsLast(Integer::compareTo)))
+                .map(image -> ProductImageResponse.builder()
+                        .id(image.getId())
+                        .imageUrl(image.getImageUrl())
+                        .isThumbnail(image.getIsThumbnail())
+                        .sortOrder(image.getSortOrder())
+                        .publicId(image.getPublicId())
+                        .build())
+                .toList();
+
         return ProductResponse.builder()
                 .id(p.getId())
                 .name(p.getName())
                 .price(p.getPrice())
                 .categoryName(p.getCategory().getName())
                 .brandName(p.getBrand().getName())
+                .images(images)
                 .build();
     }
 }

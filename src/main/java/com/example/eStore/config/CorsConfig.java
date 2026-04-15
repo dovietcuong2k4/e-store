@@ -12,11 +12,17 @@ import java.util.List;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
+    private static final List<String> ALLOWED_ORIGINS = List.of(
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:4200",
+            "http://127.0.0.1:4200"
+    );
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000") // FE
+                .allowedOrigins(ALLOWED_ORIGINS.toArray(String[]::new))
                 .allowedMethods("*")
                 .allowedHeaders("*")
                 .allowCredentials(true);
@@ -25,7 +31,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedOrigins(ALLOWED_ORIGINS);
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

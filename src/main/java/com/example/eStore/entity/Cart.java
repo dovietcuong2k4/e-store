@@ -2,6 +2,7 @@ package com.example.eStore.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.util.List;
 
@@ -22,5 +23,6 @@ public class Cart {
     private Long totalPrice;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private List<CartItem> cartItems;
 }
