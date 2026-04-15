@@ -14,8 +14,10 @@ import com.example.eStore.repository.CartItemRepository;
 import com.example.eStore.repository.CartRepository;
 import com.example.eStore.repository.ProductRepository;
 import com.example.eStore.repository.UserRepository;
+import com.example.eStore.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +30,8 @@ public class CartService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
-    public BaseResultDTO<Void> addToCart(Long userId, AddToCartRequest request) {
+    public BaseResultDTO<Void> addToCart(AddToCartRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
 
         Cart cart = getOrCreateCart(userId);
 
@@ -63,12 +66,15 @@ public class CartService {
     }
 
     public BaseResultDTO<Void> updateCartItem(Long itemId, Integer quantity) {
+        Long userId = SecurityUtils.getCurrentUserId();
 
         CartItem item = cartItemRepository.findById(itemId)
                 .orElseThrow(() -> new AppException(
                         "Cart item not found",
                         Constants.ErrorCode.Cart.UPDATE_ITEM_NOT_FOUND
                 ));
+
+        assertCartItemOwnedByUser(item, userId);
 
         item.setQuantity(quantity);
 
@@ -79,12 +85,15 @@ public class CartService {
     }
 
     public BaseResultDTO<Void> removeItem(Long itemId) {
+        Long userId = SecurityUtils.getCurrentUserId();
 
         CartItem item = cartItemRepository.findById(itemId)
                 .orElseThrow(() -> new AppException(
                         "Cart item not found",
                         Constants.ErrorCode.Cart.REMOVE_ITEM_NOT_FOUND
                 ));
+
+        assertCartItemOwnedByUser(item, userId);
 
         Cart cart = item.getCart();
 
@@ -94,7 +103,25 @@ public class CartService {
         return ApiResponseFactory.success(Constants.Message.Cart.REMOVE_SUCCESS);
     }
 
-    public BaseResultDTO<CartResponse> getCart(Long userId) {
+    @Transactional
+    public BaseResultDTO<Void> clearCart() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        Optional<Cart> cartOptional = cartRepository.findByUserId(userId);
+
+        if (cartOptional.isEmpty()) {
+            return ApiResponseFactory.success(Constants.Message.Cart.CLEAR_SUCCESS);
+        }
+
+        Cart cart = cartOptional.get();
+        cartItemRepository.deleteAllByCartId(cart.getId());
+        cart.setTotalPrice(0L);
+        cartRepository.save(cart);
+
+        return ApiResponseFactory.success(Constants.Message.Cart.CLEAR_SUCCESS);
+    }
+
+    public BaseResultDTO<CartResponse> getCart() {
+        Long userId = SecurityUtils.getCurrentUserId();
 
         Cart cart = getOrCreateCart(userId);
 
@@ -121,6 +148,14 @@ public class CartService {
         return ApiResponseFactory.success(Constants.Message.Cart.GET_CART_SUCCESS, response);
     }
 
+    private void assertCartItemOwnedByUser(CartItem item, Long userId) {
+        Long ownerId = item.getCart().getUser().getId();
+        if (!ownerId.equals(userId)) {
+            throw new AppException(
+                    "Cart item does not belong to current user",
+                    Constants.ErrorCode.Cart.ITEM_NOT_OWNED);
+        }
+    }
 
     private Cart getOrCreateCart(Long userId) {
 

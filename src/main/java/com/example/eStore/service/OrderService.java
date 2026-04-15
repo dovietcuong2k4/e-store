@@ -10,6 +10,7 @@ import com.example.eStore.entity.Order;
 import com.example.eStore.entity.OrderItem;
 import com.example.eStore.exception.AppException;
 import com.example.eStore.repository.*;
+import com.example.eStore.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,7 +55,8 @@ public class OrderService {
     private final UserRepository userRepository;
 
     @Transactional
-    public BaseResultDTO<Void> createOrder(Long userId, CreateOrderRequest request) {
+    public BaseResultDTO<Void> createOrder(CreateOrderRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
 
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new AppException(
@@ -149,7 +151,8 @@ public class OrderService {
         }
     }
 
-    public BaseResultDTO<List<Order>> getUserOrders(Long userId) {
+    public BaseResultDTO<List<Order>> getUserOrders() {
+        Long userId = SecurityUtils.getCurrentUserId();
         return ApiResponseFactory.success(
                 Constants.Message.Order.GET_SUCCESS,
                 orderRepository.findByUserId(userId)

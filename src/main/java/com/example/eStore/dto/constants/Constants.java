@@ -28,11 +28,16 @@ public interface Constants {
             String GET_TOTAL_FAILED = "USER_GET_TOTAL_FAILED";
         }
 
+        interface Security {
+            String UNAUTHENTICATED = "SECURITY_UNAUTHENTICATED";
+        }
+
         interface Cart {
             String ADD_PRODUCT_NOT_FOUND = "CART_ADD_PRODUCT_NOT_FOUND";
             String ADD_USER_NOT_FOUND = "CART_ADD_USER_NOT_FOUND";
             String UPDATE_ITEM_NOT_FOUND = "CART_UPDATE_ITEM_NOT_FOUND";
             String REMOVE_ITEM_NOT_FOUND = "CART_REMOVE_ITEM_NOT_FOUND";
+            String ITEM_NOT_OWNED = "CART_ITEM_NOT_OWNED";
         }
 
         interface Order {
@@ -63,6 +68,7 @@ public interface Constants {
             String ADD_SUCCESS = "Add to cart successfully";
             String UPDATE_SUCCESS = "Update cart item successfully";
             String REMOVE_SUCCESS = "Remove cart item successfully";
+            String CLEAR_SUCCESS = "Clear cart successfully";
             String GET_CART_SUCCESS = "Get cart successfully";
         }
 

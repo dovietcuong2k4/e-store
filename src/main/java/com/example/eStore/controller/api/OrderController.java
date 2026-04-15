@@ -17,17 +17,13 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    private Long getUserId() {
-        return 2L;
-    }
-
     @PostMapping
     public ResponseEntity<BaseResultDTO<Void>> create(@RequestBody CreateOrderRequest request) {
-        return ResponseEntity.ok(orderService.createOrder(getUserId(), request));
+        return ResponseEntity.ok(orderService.createOrder(request));
     }
 
     @GetMapping
     public ResponseEntity<BaseResultDTO<List<Order>>> getOrders() {
-        return ResponseEntity.ok(orderService.getUserOrders(getUserId()));
+        return ResponseEntity.ok(orderService.getUserOrders());
     }
 }

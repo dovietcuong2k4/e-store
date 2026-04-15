@@ -17,16 +17,13 @@ public class CartController {
     private final CartService cartService;
 
     @PostMapping("/add")
-    public ResponseEntity<BaseResultDTO<Void>> add(
-            @RequestParam Long userId,
-            @RequestBody AddToCartRequest request) {
-
-        return ResponseEntity.ok(cartService.addToCart(userId, request));
+    public ResponseEntity<BaseResultDTO<Void>> add(@RequestBody AddToCartRequest request) {
+        return ResponseEntity.ok(cartService.addToCart(request));
     }
 
     @GetMapping
-    public ResponseEntity<BaseResultDTO<CartResponse>> getCart(@RequestParam Long userId) {
-        return ResponseEntity.ok(cartService.getCart(userId));
+    public ResponseEntity<BaseResultDTO<CartResponse>> getCart() {
+        return ResponseEntity.ok(cartService.getCart());
     }
 
     @PutMapping("/item/{id}")
@@ -40,5 +37,10 @@ public class CartController {
     @DeleteMapping("/item/{id}")
     public ResponseEntity<BaseResultDTO<Void>> remove(@PathVariable Long id) {
         return ResponseEntity.ok(cartService.removeItem(id));
+    }
+
+    @DeleteMapping("/clear")
+    public ResponseEntity<BaseResultDTO<Void>> clear() {
+        return ResponseEntity.ok(cartService.clearCart());
     }
 }

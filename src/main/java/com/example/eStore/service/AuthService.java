@@ -76,7 +76,7 @@ public class AuthService {
             );
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+        String token = jwtService.generateToken(user.getEmail(), user.getId());
 
         return ApiResponseFactory.success(
                 Constants.Message.Auth.LOGIN_SUCCESS,

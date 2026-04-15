@@ -12,6 +12,16 @@ public class ProductResponse {
     private Long id;
     private String name;
     private Long price;
+    private String cpu;
+    private String ram;
+    private String screen;
+    private String operatingSystem;
+    private String batteryCapacity;
+    private String design;
+    private String warrantyInfo;
+    private String description;
+    private Integer soldQuantity;
+    private Integer stockQuantity;
 
     private String categoryName;
     private String brandName;
