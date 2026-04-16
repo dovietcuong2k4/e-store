@@ -56,6 +56,10 @@ public interface Constants {
             String UPDATE_NOT_FOUND = "PRODUCT_UPDATE_NOT_FOUND";
             String DELETE_NOT_FOUND = "PRODUCT_DELETE_NOT_FOUND";
         }
+
+        interface Contact {
+            String SEND_MAIL_FAILED = "CONTACT_SEND_MAIL_FAILED";
+        }
     }
 
     interface Message {
@@ -90,6 +94,10 @@ public interface Constants {
             String GET_DETAIL_SUCCESS = "Get product detail successfully";
             String UPDATE_SUCCESS = "Update product successfully";
             String DELETE_SUCCESS = "Delete product successfully";
+        }
+
+        interface Contact {
+            String SEND_SUCCESS = "Contact sent successfully";
         }
 
         interface User {

@@ -3,6 +3,8 @@ package com.example.eStore.controller;
 import com.example.eStore.dto.BaseResultDTO;
 import com.example.eStore.dto.response.ApiResponseFactory;
 import com.example.eStore.exception.AppException;
+import com.example.eStore.exception.ContactMailException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -14,6 +16,7 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
+@Slf4j
 public class ApiExceptionHandler {
 
     @ExceptionHandler(AppException.class)
@@ -44,6 +47,13 @@ public class ApiExceptionHandler {
                 .body(ApiResponseFactory.error(message, "VALIDATION_ERROR"));
     }
 
+    @ExceptionHandler(ContactMailException.class)
+    public ResponseEntity<BaseResultDTO<Void>> handleContactMail(ContactMailException exception) {
+        log.error("Contact email sending failed", exception);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponseFactory.error("Send contact mail failed", "CONTACT_SEND_MAIL_FAILED"));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<BaseResultDTO<Void>> handleBusiness(RuntimeException exception) {
         return ResponseEntity.badRequest()
@@ -52,6 +62,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResultDTO<Void>> handleUnexpected(Exception exception) {
+        log.error("Unhandled exception", exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponseFactory.error("Internal server error", "INTERNAL_SERVER_ERROR"));
     }

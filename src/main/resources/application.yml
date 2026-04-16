@@ -1,17 +1,38 @@
 spring:
   application:
     name: eStore
+
   datasource:
     url: jdbc:mysql://localhost:3306/mydb
     username: root
     password: 123456
-    driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
       ddl-auto: validate
-#    show-sql: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: bb10102004@gmail.com
+    password: izcv rlfq esaw wcwd
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
 server:
   port: 9090
+
+contact:
+  support-email: bb10102004@gmail.com
+#    show-sql: true
 #logging:
 #    level: DEBUG
 ##    file: eStore.log

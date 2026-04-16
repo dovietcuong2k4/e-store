@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                                 // ===== PUBLIC =====
                                 .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
 
                                 // ===== PRODUCT =====
                                 .requestMatchers(HttpMethod.GET, "/api/products/**")
