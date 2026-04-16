@@ -26,6 +26,12 @@ public interface Constants {
             String LOGIN_EMAIL_NOT_FOUND = "USER_LOGIN_EMAIL_NOT_FOUND";
             String LOGIN_INVALID_PASSWORD = "USER_LOGIN_INVALID_PASSWORD";
             String GET_TOTAL_FAILED = "USER_GET_TOTAL_FAILED";
+            String ADMIN_GET_NOT_FOUND = "USER_ADMIN_GET_NOT_FOUND";
+            String ADMIN_CREATE_EMAIL_EXISTS = "USER_ADMIN_CREATE_EMAIL_EXISTS";
+            String ADMIN_CREATE_ROLE_NOT_FOUND = "USER_ADMIN_CREATE_ROLE_NOT_FOUND";
+            String ADMIN_UPDATE_ROLE_NOT_FOUND = "USER_ADMIN_UPDATE_ROLE_NOT_FOUND";
+            String ADMIN_UPDATE_EMAIL_EXISTS = "USER_ADMIN_UPDATE_EMAIL_EXISTS";
+            String ADMIN_DELETE_NOT_FOUND = "USER_ADMIN_DELETE_NOT_FOUND";
         }
 
         interface Security {
@@ -54,6 +60,8 @@ public interface Constants {
             String CREATE_BRAND_NOT_FOUND = "PRODUCT_CREATE_BRAND_NOT_FOUND";
             String GET_DETAIL_NOT_FOUND = "PRODUCT_GET_DETAIL_NOT_FOUND";
             String UPDATE_NOT_FOUND = "PRODUCT_UPDATE_NOT_FOUND";
+            String UPDATE_CATEGORY_NOT_FOUND = "PRODUCT_UPDATE_CATEGORY_NOT_FOUND";
+            String UPDATE_BRAND_NOT_FOUND = "PRODUCT_UPDATE_BRAND_NOT_FOUND";
             String DELETE_NOT_FOUND = "PRODUCT_DELETE_NOT_FOUND";
         }
 
@@ -102,6 +110,11 @@ public interface Constants {
 
         interface User {
             String GET_TOTAL_SUCCESS = "Get total users successfully";
+            String ADMIN_GET_ALL_SUCCESS = "Get users successfully";
+            String ADMIN_GET_DETAIL_SUCCESS = "Get user detail successfully";
+            String ADMIN_CREATE_SUCCESS = "Create user successfully";
+            String ADMIN_UPDATE_SUCCESS = "Update user successfully";
+            String ADMIN_DELETE_SUCCESS = "Delete user successfully";
         }
     }
 }

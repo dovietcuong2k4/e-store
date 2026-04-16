@@ -23,7 +23,9 @@ public class ProductResponse {
     private Integer soldQuantity;
     private Integer stockQuantity;
 
+    private Long categoryId;
     private String categoryName;
+    private Long brandId;
     private String brandName;
 
     private List<ProductImageResponse> images;

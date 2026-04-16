@@ -19,6 +19,6 @@ public class Brand {
     private String imageUrl;
 
     @OneToMany(mappedBy = "brand")
-    @JsonManagedReference
+    @JsonManagedReference("brand-product")
     private List<Product> products;
 }

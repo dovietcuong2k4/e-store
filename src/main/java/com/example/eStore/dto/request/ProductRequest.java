@@ -12,7 +12,14 @@ public class ProductRequest {
     private String ram;
     private String screen;
     private String operatingSystem;
+    private String batteryCapacity;
+    private String design;
+    private String warrantyInfo;
+    private String description;
+    private Integer stockQuantity;
 
     private Long categoryId;
     private Long brandId;
+    
+    private java.util.List<ProductImageRequest> images;
 }

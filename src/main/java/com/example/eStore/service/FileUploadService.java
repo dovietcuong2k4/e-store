@@ -14,15 +14,28 @@ public class FileUploadService {
     @Autowired
     private Cloudinary cloudinary;
 
-    public String uploadFile(MultipartFile file) {
+    public Map<String, String> uploadFile(MultipartFile file) {
         try {
             Map uploadResult = cloudinary.uploader().upload(
                     file.getBytes(),
                     ObjectUtils.emptyMap()
             );
-            return uploadResult.get("secure_url").toString();
+            Map<String, String> result = new java.util.HashMap<>();
+            result.put("url", uploadResult.get("secure_url").toString());
+            result.put("publicId", uploadResult.get("public_id").toString());
+            return result;
         } catch (Exception e) {
-            throw new RuntimeException("Upload failed");
+            throw new RuntimeException("Upload failed: " + e.getMessage());
         }
     }
+
+    public void deleteFile(String publicId) {
+        if (publicId == null || publicId.isEmpty()) return;
+        try {
+            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+        } catch (Exception e) {
+            System.err.println("Failed to delete file from Cloudinary: " + publicId);
+        }
+    }
+
 }

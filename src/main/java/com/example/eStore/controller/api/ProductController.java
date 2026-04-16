@@ -17,7 +17,7 @@ public class ProductController {
 
     private final ProductService productService;
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<BaseResultDTO<ProductResponse>> create(@RequestBody ProductRequest request) {
         return ResponseEntity.ok(productService.create(request));
     }
@@ -38,7 +38,7 @@ public class ProductController {
         return ResponseEntity.ok(productService.getDetail(id));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("update/{id}")
     public ResponseEntity<BaseResultDTO<ProductResponse>> update(
             @PathVariable Long id,
             @RequestBody ProductRequest request) {
@@ -46,7 +46,7 @@ public class ProductController {
         return ResponseEntity.ok(productService.update(id, request));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("delete/{id}")
     public ResponseEntity<BaseResultDTO<Void>> delete(@PathVariable Long id) {
         return ResponseEntity.ok(productService.delete(id));
     }

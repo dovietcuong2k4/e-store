@@ -1,6 +1,7 @@
 package com.example.eStore.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,14 +33,15 @@ public class Product {
 
     @ManyToOne
     @JoinColumn(name = "category_id")
-    @JsonBackReference
+    @JsonBackReference("category-product")
     private Category category;
 
     @ManyToOne
     @JoinColumn(name = "brand_id")
-    @JsonBackReference
+    @JsonBackReference("brand-product")
     private Brand brand;
 
     @OneToMany(mappedBy = "product")
+    @JsonManagedReference
     private List<ProductImage> images;
 }
