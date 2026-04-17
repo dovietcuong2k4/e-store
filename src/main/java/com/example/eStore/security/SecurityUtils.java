@@ -33,6 +33,18 @@ public final class SecurityUtils {
                 Constants.ErrorCode.Security.UNAUTHENTICATED);
     }
 
+    public static Long getCurrentUserIdOrNull() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        Object principal = auth.getPrincipal();
+        if (principal instanceof AuthenticatedUser user) {
+            return user.getId();
+        }
+        return null;
+    }
+
     public static Set<String> getCurrentUserRoles() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {

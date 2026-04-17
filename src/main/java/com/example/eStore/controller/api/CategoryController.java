@@ -1,5 +1,7 @@
 package com.example.eStore.controller.api;
 
+import com.example.eStore.dto.request.CategoryRequest;
+import com.example.eStore.dto.response.CategoryResponse;
 import com.example.eStore.entity.Category;
 import com.example.eStore.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,21 +18,25 @@ public class CategoryController {
     private final CategoryRepository categoryRepository;
 
     @GetMapping
-    public ResponseEntity<List<Category>> getAll() {
-        return ResponseEntity.ok(categoryRepository.findAll());
+    public ResponseEntity<List<CategoryResponse>> getAll() {
+        return ResponseEntity.ok(categoryRepository.findAll().stream()
+                .map(CategoryResponse::from)
+                .toList());
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Category> create(@RequestBody Category category) {
-        return ResponseEntity.ok(categoryRepository.save(category));
+    public ResponseEntity<CategoryResponse> create(@RequestBody CategoryRequest request) {
+        Category category = new Category();
+        category.setName(request.getName());
+        return ResponseEntity.ok(CategoryResponse.from(categoryRepository.save(category)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Category> update(@PathVariable Long id, @RequestBody Category category) {
+    public ResponseEntity<CategoryResponse> update(@PathVariable Long id, @RequestBody CategoryRequest request) {
         return categoryRepository.findById(id)
                 .map(existing -> {
-                    existing.setName(category.getName());
-                    return ResponseEntity.ok(categoryRepository.save(existing));
+                    existing.setName(request.getName());
+                    return ResponseEntity.ok(CategoryResponse.from(categoryRepository.save(existing)));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

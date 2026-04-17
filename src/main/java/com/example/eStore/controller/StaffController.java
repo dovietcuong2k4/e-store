@@ -30,16 +30,10 @@ public class StaffController {
         return ResponseEntity.ok(orderService.getAssignableShippers());
     }
 
-    @PutMapping("/orders/{id}/confirm")
-    public ResponseEntity<BaseResultDTO<Void>> confirm(@PathVariable Long id) {
+    @PutMapping("/orders/{id}/process")
+    public ResponseEntity<BaseResultDTO<Void>> process(@PathVariable Long id) {
         return ResponseEntity.ok(
-                orderService.updateStatus(id, Constants.OrderStatus.CONFIRMED, Constants.Role.STAFF));
-    }
-
-    @PutMapping("/orders/{id}/prepare")
-    public ResponseEntity<BaseResultDTO<Void>> prepare(@PathVariable Long id) {
-        return ResponseEntity.ok(
-                orderService.updateStatus(id, Constants.OrderStatus.PREPARING, Constants.Role.STAFF));
+                orderService.updateStatus(id, Constants.OrderStatus.PROCESSING, Constants.Role.STAFF));
     }
 
     @PutMapping("/orders/{id}/ready")

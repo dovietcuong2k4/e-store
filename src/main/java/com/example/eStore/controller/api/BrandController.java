@@ -1,5 +1,7 @@
 package com.example.eStore.controller.api;
 
+import com.example.eStore.dto.request.BrandRequest;
+import com.example.eStore.dto.response.BrandResponse;
 import com.example.eStore.entity.Brand;
 import com.example.eStore.repository.BrandRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,22 +18,27 @@ public class BrandController {
     private final BrandRepository brandRepository;
 
     @GetMapping
-    public ResponseEntity<List<Brand>> getAll() {
-        return ResponseEntity.ok(brandRepository.findAll());
+    public ResponseEntity<List<BrandResponse>> getAll() {
+        return ResponseEntity.ok(brandRepository.findAll().stream()
+                .map(BrandResponse::from)
+                .toList());
     }
 
     @PostMapping
-    public ResponseEntity<Brand> create(@RequestBody Brand brand) {
-        return ResponseEntity.ok(brandRepository.save(brand));
+    public ResponseEntity<BrandResponse> create(@RequestBody BrandRequest request) {
+        Brand brand = new Brand();
+        brand.setName(request.getName());
+        brand.setImageUrl(request.getImageUrl());
+        return ResponseEntity.ok(BrandResponse.from(brandRepository.save(brand)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Brand> update(@PathVariable Long id, @RequestBody Brand brand) {
+    public ResponseEntity<BrandResponse> update(@PathVariable Long id, @RequestBody BrandRequest request) {
         return brandRepository.findById(id)
                 .map(existing -> {
-                    existing.setName(brand.getName());
-                    existing.setImageUrl(brand.getImageUrl());
-                    return ResponseEntity.ok(brandRepository.save(existing));
+                    existing.setName(request.getName());
+                    existing.setImageUrl(request.getImageUrl());
+                    return ResponseEntity.ok(BrandResponse.from(brandRepository.save(existing)));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

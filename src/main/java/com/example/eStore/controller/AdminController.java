@@ -1,6 +1,7 @@
 package com.example.eStore.controller;
 
 import com.example.eStore.dto.BaseResultDTO;
+import com.example.eStore.dto.constants.Constants;
 import com.example.eStore.dto.request.AdminUserUpsertRequest;
 import com.example.eStore.dto.response.OrderWorkflowResponse;
 import com.example.eStore.dto.response.UserResponse;
@@ -28,6 +29,36 @@ public class AdminController {
             @RequestParam(required = false) Long shipperId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(orderService.getAdminOrders(status, shipperId, date));
+    }
+
+    @PutMapping("/orders/{id}/process")
+    public ResponseEntity<BaseResultDTO<Void>> process(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                orderService.updateStatus(id, Constants.OrderStatus.PROCESSING, Constants.Role.ADMIN));
+    }
+
+    @PutMapping("/orders/{id}/ready")
+    public ResponseEntity<BaseResultDTO<Void>> ready(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                orderService.updateStatus(id, Constants.OrderStatus.READY_FOR_SHIPPING, Constants.Role.ADMIN));
+    }
+
+    @PutMapping("/orders/{id}/cancel")
+    public ResponseEntity<BaseResultDTO<Void>> cancel(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                orderService.updateStatus(id, Constants.OrderStatus.CANCELLED, Constants.Role.ADMIN));
+    }
+
+    @PutMapping("/orders/{id}/retry")
+    public ResponseEntity<BaseResultDTO<Void>> retry(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                orderService.updateStatus(id, Constants.OrderStatus.READY_FOR_SHIPPING, Constants.Role.ADMIN));
+    }
+
+    @PutMapping("/orders/{id}/assign-shipper")
+    public ResponseEntity<BaseResultDTO<Void>> assignShipper(@PathVariable Long id,
+                                                             @RequestBody com.example.eStore.dto.request.AssignShipperRequest request) {
+        return ResponseEntity.ok(orderService.assignShipper(id, request));
     }
 
     @GetMapping("/users")

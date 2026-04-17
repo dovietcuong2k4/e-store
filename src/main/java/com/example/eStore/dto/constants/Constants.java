@@ -3,9 +3,7 @@ package com.example.eStore.dto.constants;
 public interface Constants {
     interface OrderStatus {
         String CREATED = "CREATED";
-        String PENDING = "PENDING";
-        String CONFIRMED = "CONFIRMED";
-        String PREPARING = "PREPARING";
+        String PROCESSING = "PROCESSING";
         String READY_FOR_SHIPPING = "READY_FOR_SHIPPING";
         String SHIPPING = "SHIPPING";
         String DELIVERED = "DELIVERED";
@@ -51,8 +49,10 @@ public interface Constants {
             String CREATE_CART_NOT_FOUND = "ORDER_CREATE_CART_NOT_FOUND";
             String CREATE_EMPTY_CART = "ORDER_CREATE_EMPTY_CART";
             String CREATE_USER_NOT_FOUND = "ORDER_CREATE_USER_NOT_FOUND";
+            String CREATE_OUT_OF_STOCK = "ORDER_CREATE_OUT_OF_STOCK";
             String UPDATE_NOT_FOUND = "ORDER_UPDATE_NOT_FOUND";
             String UPDATE_INVALID_STATUS = "ORDER_UPDATE_INVALID_STATUS";
+            String CANCEL_NOT_ALLOWED = "ORDER_CANCEL_NOT_ALLOWED";
             String GET_BY_USER_FAILED = "ORDER_GET_BY_USER_FAILED";
             String ASSIGN_SHIPPER_INVALID = "ORDER_ASSIGN_SHIPPER_INVALID";
         }
@@ -89,10 +89,9 @@ public interface Constants {
         interface Order {
             String CREATE_SUCCESS = "Create order successfully";
             String GET_SUCCESS = "Get orders successfully";
-            String CONFIRM_SUCCESS = "Order confirmed successfully";
-            String PREPARING_SUCCESS = "Order is being prepared";
+            String PROCESSING_SUCCESS = "Order is being processed";
             String READY_SUCCESS = "Order is ready for shipping";
-            String SHIPPING_SUCCESS = "Order is now shipping";
+            String SHIPPING_SUCCESS = "Order is being shipped";
             String DELIVERY_SUCCESS = "Order delivered successfully";
             String DELIVERY_FAILED = "Delivery failed";
             String CANCEL_SUCCESS = "Order cancelled successfully";

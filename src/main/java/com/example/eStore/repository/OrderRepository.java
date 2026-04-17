@@ -9,11 +9,15 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import java.util.Optional;
+
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-
     @EntityGraph(attributePaths = {"user", "shipper", "orderItems", "orderItems.product"})
     List<Order> findByUserIdOrderByOrderDateDesc(Long userId);
+
+    @EntityGraph(attributePaths = {"user", "shipper", "orderItems", "orderItems.product"})
+    List<Order> findAllByOrderByOrderDateDesc();
 
     @EntityGraph(attributePaths = {"user", "shipper", "orderItems", "orderItems.product"})
     List<Order> findByStatusInOrderByOrderDateDesc(List<String> statuses);

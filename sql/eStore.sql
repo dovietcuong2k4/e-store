@@ -279,7 +279,7 @@ INSERT INTO cart_items (id,quantity,cart_id,product_id) VALUES
 INSERT INTO orders
 (id,receiver_address,note,receiver_name,order_date,shipping_date,received_date,receiver_phone,status,user_id,shipper_id)
 VALUES
-(31,'Ha Noi','Deliver quickly','Nguyen Van A','2024-01-10 10:00:00',NULL,NULL,'0900000001','PENDING',2,NULL),
+(31,'Ha Noi','Deliver quickly','Nguyen Van A','2024-01-10 10:00:00',NULL,NULL,'0900000001','PROCESSING',2,NULL),
 
 (32,'Ha Noi','Call before delivery','Tran Van B','2024-01-11 14:00:00',NULL,NULL,'0900000002','CREATED',2,3);
 

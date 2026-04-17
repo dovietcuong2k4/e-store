@@ -3,15 +3,13 @@ package com.example.eStore.service;
 import com.example.eStore.dto.BaseResultDTO;
 import com.example.eStore.dto.constants.Constants;
 import com.example.eStore.dto.request.AssignShipperRequest;
+import com.example.eStore.dto.request.CartItemRequest;
 import com.example.eStore.dto.request.CreateOrderRequest;
 import com.example.eStore.dto.response.ApiResponseFactory;
+import com.example.eStore.dto.response.CreateOrderResponse;
 import com.example.eStore.dto.response.OrderWorkflowResponse;
 import com.example.eStore.dto.response.UserSummaryResponse;
-import com.example.eStore.entity.Cart;
-import com.example.eStore.entity.CartItem;
-import com.example.eStore.entity.Order;
-import com.example.eStore.entity.OrderItem;
-import com.example.eStore.entity.User;
+import com.example.eStore.entity.*;
 import com.example.eStore.exception.AppException;
 import com.example.eStore.repository.*;
 import com.example.eStore.security.SecurityUtils;
@@ -24,25 +22,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class OrderService {
     private static final Map<String, Map<String, Set<String>>> ORDER_STATUS_RULES = Map.of(
             Constants.OrderStatus.CREATED, Map.of(
-                    Constants.OrderStatus.PENDING, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF),
-                    Constants.OrderStatus.CANCELLED, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF)
+                    Constants.OrderStatus.PROCESSING, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF),
+                    Constants.OrderStatus.CANCELLED, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF, Constants.Role.CUSTOMER)
             ),
-            Constants.OrderStatus.PENDING, Map.of(
-                    Constants.OrderStatus.CONFIRMED, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF),
+            Constants.OrderStatus.PROCESSING, Map.of(
+                    Constants.OrderStatus.READY_FOR_SHIPPING, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF),
                     Constants.OrderStatus.CANCELLED, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF)
-            ),
-            Constants.OrderStatus.CONFIRMED, Map.of(
-                    Constants.OrderStatus.PREPARING, Set.of(Constants.Role.STAFF),
-                    Constants.OrderStatus.CANCELLED, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF)
-            ),
-            Constants.OrderStatus.PREPARING, Map.of(
-                    Constants.OrderStatus.READY_FOR_SHIPPING, Set.of(Constants.Role.STAFF)
             ),
             Constants.OrderStatus.READY_FOR_SHIPPING, Map.of(
                     Constants.OrderStatus.SHIPPING, Set.of(Constants.Role.SHIPPER)
@@ -52,7 +44,7 @@ public class OrderService {
                     Constants.OrderStatus.DELIVERY_FAILED, Set.of(Constants.Role.SHIPPER)
             ),
             Constants.OrderStatus.DELIVERY_FAILED, Map.of(
-                    Constants.OrderStatus.READY_FOR_SHIPPING, Set.of(Constants.Role.STAFF)
+                    Constants.OrderStatus.READY_FOR_SHIPPING, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF)
             )
     );
 
@@ -61,26 +53,12 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final OrderHistoryRepository orderHistoryRepository;
 
     @Transactional
-    public BaseResultDTO<Void> createOrder(CreateOrderRequest request) {
+    public BaseResultDTO<CreateOrderResponse> createOrder(CreateOrderRequest request) {
         Long userId = SecurityUtils.getCurrentUserId();
-
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new AppException(
-                        "Cart not found",
-                        Constants.ErrorCode.Order.CREATE_CART_NOT_FOUND
-                ));
-
-        List<CartItem> cartItems =
-                cartItemRepository.findByCartId(cart.getId());
-
-        if (cartItems.isEmpty()) {
-            throw new AppException(
-                    "Cart is empty",
-                    Constants.ErrorCode.Order.CREATE_EMPTY_CART
-            );
-        }
 
         Order order = new Order();
         order.setUser(userRepository.findById(userId)
@@ -88,6 +66,7 @@ public class OrderService {
                         "User not found",
                         Constants.ErrorCode.Order.CREATE_USER_NOT_FOUND
                 )));
+        
         order.setReceiverName(request.getReceiverName());
         order.setReceiverPhone(request.getReceiverPhone());
         order.setReceiverAddress(request.getReceiverAddress());
@@ -97,29 +76,73 @@ public class OrderService {
 
         orderRepository.save(order);
 
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new AppException(
+                        "Cart not found",
+                        Constants.ErrorCode.Order.CREATE_CART_NOT_FOUND
+                ));
+
+        List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getId());
+
+        if (cartItems.isEmpty()) {
+            throw new AppException(
+                    "Cart is empty",
+                    Constants.ErrorCode.Order.CREATE_EMPTY_CART
+            );
+        }
+
         for (CartItem item : cartItems) {
+            Product product = productRepository.findByIdWithLock(item.getProduct().getId())
+                    .orElseThrow(() -> new AppException(
+                            "Product not found",
+                            Constants.ErrorCode.Product.UPDATE_NOT_FOUND
+                    ));
+
+            if (product.getStockQuantity() < item.getQuantity()) {
+                throw new AppException(
+                        "Product " + product.getName() + " is out of stock",
+                        Constants.ErrorCode.Order.CREATE_OUT_OF_STOCK
+                );
+            }
+
+            product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
+            product.setSoldQuantity((product.getSoldQuantity() == null ? 0 : product.getSoldQuantity()) + item.getQuantity());
+            productRepository.save(product);
 
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
-            orderItem.setProduct(item.getProduct());
+            orderItem.setProduct(product);
             orderItem.setQuantity(item.getQuantity());
-
-            orderItem.setPrice(item.getProduct().getPrice());
-
+            orderItem.setPrice(product.getPrice());
             orderItemRepository.save(orderItem);
         }
 
         cartItemRepository.deleteAll(cartItems);
         cart.setTotalPrice(0L);
         cartRepository.save(cart);
-        return ApiResponseFactory.success(Constants.Message.Order.CREATE_SUCCESS);
+
+        // Record initial history
+        orderHistoryRepository.save(OrderHistory.builder()
+                .order(order)
+                .fromStatus(null)
+                .toStatus(Constants.OrderStatus.CREATED)
+                .changedBy(Constants.Role.CUSTOMER + " (" + userId + ")")
+                .changedAt(LocalDateTime.now())
+                .build());
+
+        return ApiResponseFactory.success(
+            Constants.Message.Order.CREATE_SUCCESS,
+            new CreateOrderResponse(order.getId())
+        );
     }
 
     @Transactional
     public BaseResultDTO<Void> updateStatus(Long orderId, String status, String actorRole) {
 
         Order order = findOrderOrThrow(orderId);
-        validateStatusTransition(order.getStatus(), status, actorRole);
+        String oldStatus = order.getStatus();
+
+        validateStatusTransition(order, status, actorRole);
         validateShipperOwnership(order, actorRole);
 
         order.setStatus(status);
@@ -131,17 +154,33 @@ public class OrderService {
         }
 
         orderRepository.save(order);
+
+        // Record history
+        orderHistoryRepository.save(OrderHistory.builder()
+                .order(order)
+                .fromStatus(oldStatus)
+                .toStatus(status)
+                .changedBy(actorRole + " (" + SecurityUtils.getCurrentUserId() + ")")
+                .changedAt(LocalDateTime.now())
+                .build());
+
         return ApiResponseFactory.success(resolveUpdateStatusMessage(status));
     }
 
     @Transactional
     public BaseResultDTO<Void> assignShipper(Long orderId, AssignShipperRequest request) {
-        ensureCurrentUserHasRole(Constants.Role.STAFF);
+        if (!SecurityUtils.hasRole(Constants.Role.STAFF) && !SecurityUtils.hasRole(Constants.Role.ADMIN)) {
+            throw new AppException(
+                    "Current user is not allowed to perform this action",
+                    Constants.ErrorCode.Order.UPDATE_INVALID_STATUS
+            );
+        }
 
         Order order = findOrderOrThrow(orderId);
-        if (!Constants.OrderStatus.READY_FOR_SHIPPING.equals(order.getStatus())) {
+        if (!Constants.OrderStatus.READY_FOR_SHIPPING.equals(order.getStatus()) &&
+            !Constants.OrderStatus.DELIVERY_FAILED.equals(order.getStatus())) {
             throw new AppException(
-                    "Order can only be assigned when it is READY_FOR_SHIPPING",
+                    "Order can only be assigned when it is READY_FOR_SHIPPING or DELIVERY_FAILED",
                     Constants.ErrorCode.Order.UPDATE_INVALID_STATUS
             );
         }
@@ -163,17 +202,21 @@ public class OrderService {
         }
 
         order.setShipper(shipper);
+        if (Constants.OrderStatus.DELIVERY_FAILED.equals(order.getStatus())) {
+            order.setStatus(Constants.OrderStatus.READY_FOR_SHIPPING);
+        }
         orderRepository.save(order);
         return ApiResponseFactory.success(Constants.Message.Order.ASSIGN_SHIPPER_SUCCESS);
     }
 
     private void validateStatusTransition(
-            String currentStatus,
+            Order order,
             String nextStatus,
             String actorRole) {
 
         ensureCurrentUserHasRole(actorRole);
 
+        String currentStatus = order.getStatus();
         Map<String, Set<String>> nextStatusMap = ORDER_STATUS_RULES.get(currentStatus);
 
         if (nextStatusMap == null || !nextStatusMap.containsKey(nextStatus)) {
@@ -190,6 +233,17 @@ public class OrderService {
                     Constants.ErrorCode.Order.UPDATE_INVALID_STATUS
             );
         }
+
+        // Customer specific validation
+        if (Constants.Role.CUSTOMER.equals(actorRole)) {
+            Long currentUserId = SecurityUtils.getCurrentUserId();
+            if (!currentUserId.equals(order.getUser().getId())) {
+                throw new AppException(
+                        "You can only cancel your own orders",
+                        Constants.ErrorCode.Order.CANCEL_NOT_ALLOWED
+                );
+            }
+        }
     }
 
     public BaseResultDTO<List<OrderWorkflowResponse>> getUserOrders() {
@@ -205,16 +259,9 @@ public class OrderService {
 
     public BaseResultDTO<List<OrderWorkflowResponse>> getStaffOrders() {
         ensureCurrentUserHasRole(Constants.Role.STAFF);
-        List<String> statuses = List.of(
-                Constants.OrderStatus.CREATED,
-                Constants.OrderStatus.PENDING,
-                Constants.OrderStatus.CONFIRMED,
-                Constants.OrderStatus.PREPARING,
-                Constants.OrderStatus.READY_FOR_SHIPPING
-        );
         return ApiResponseFactory.success(
                 Constants.Message.Order.GET_SUCCESS,
-                orderRepository.findByStatusInOrderByOrderDateDesc(statuses)
+                orderRepository.findAllByOrderByOrderDateDesc()
                         .stream()
                         .map(OrderWorkflowResponse::from)
                         .toList()
@@ -293,8 +340,7 @@ public class OrderService {
 
     private String resolveUpdateStatusMessage(String status) {
         return switch (status) {
-            case Constants.OrderStatus.CONFIRMED -> Constants.Message.Order.CONFIRM_SUCCESS;
-            case Constants.OrderStatus.PREPARING -> Constants.Message.Order.PREPARING_SUCCESS;
+            case Constants.OrderStatus.PROCESSING -> Constants.Message.Order.PROCESSING_SUCCESS;
             case Constants.OrderStatus.READY_FOR_SHIPPING -> Constants.Message.Order.READY_SUCCESS;
             case Constants.OrderStatus.SHIPPING -> Constants.Message.Order.SHIPPING_SUCCESS;
             case Constants.OrderStatus.DELIVERED -> Constants.Message.Order.DELIVERY_SUCCESS;
