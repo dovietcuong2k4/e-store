@@ -2,7 +2,7 @@ package com.example.eStore.controller.api;
 
 import com.example.eStore.dto.BaseResultDTO;
 import com.example.eStore.dto.request.CreateOrderRequest;
-import com.example.eStore.entity.Order;
+import com.example.eStore.dto.response.OrderWorkflowResponse;
 import com.example.eStore.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +23,7 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResultDTO<List<Order>>> getOrders() {
+    public ResponseEntity<BaseResultDTO<List<OrderWorkflowResponse>>> getOrders() {
         return ResponseEntity.ok(orderService.getUserOrders());
     }
 }

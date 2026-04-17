@@ -47,7 +47,7 @@ public class AuthService {
         user.setAddress(request.getAddress());
 
         Role role =
-                roleRepository.findByName("CUSTOMER")
+                roleRepository.findByName(Constants.Role.CUSTOMER)
                         .orElseThrow(() -> new AppException(
                                 "Customer role not found",
                                 Constants.ErrorCode.User.REGISTER_ROLE_NOT_FOUND

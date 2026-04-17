@@ -135,6 +135,7 @@ public class CartService {
                         .productName(item.getProduct().getName())
                         .productPrice(item.getProduct().getPrice())
                         .quantity(item.getQuantity())
+                        .productImageUrl(item.getProduct().getThumbnailUrl())
                         .build())
                 .toList();
 

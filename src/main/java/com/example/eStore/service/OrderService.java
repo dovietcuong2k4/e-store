@@ -2,12 +2,16 @@ package com.example.eStore.service;
 
 import com.example.eStore.dto.BaseResultDTO;
 import com.example.eStore.dto.constants.Constants;
+import com.example.eStore.dto.request.AssignShipperRequest;
 import com.example.eStore.dto.request.CreateOrderRequest;
 import com.example.eStore.dto.response.ApiResponseFactory;
+import com.example.eStore.dto.response.OrderWorkflowResponse;
+import com.example.eStore.dto.response.UserSummaryResponse;
 import com.example.eStore.entity.Cart;
 import com.example.eStore.entity.CartItem;
 import com.example.eStore.entity.Order;
 import com.example.eStore.entity.OrderItem;
+import com.example.eStore.entity.User;
 import com.example.eStore.exception.AppException;
 import com.example.eStore.repository.*;
 import com.example.eStore.security.SecurityUtils;
@@ -15,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -25,16 +30,19 @@ import java.util.Set;
 public class OrderService {
     private static final Map<String, Map<String, Set<String>>> ORDER_STATUS_RULES = Map.of(
             Constants.OrderStatus.CREATED, Map.of(
+                    Constants.OrderStatus.PENDING, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF),
+                    Constants.OrderStatus.CANCELLED, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF)
+            ),
+            Constants.OrderStatus.PENDING, Map.of(
                     Constants.OrderStatus.CONFIRMED, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF),
                     Constants.OrderStatus.CANCELLED, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF)
             ),
             Constants.OrderStatus.CONFIRMED, Map.of(
                     Constants.OrderStatus.PREPARING, Set.of(Constants.Role.STAFF),
-                    Constants.OrderStatus.CANCELLED, Set.of(Constants.Role.ADMIN)
+                    Constants.OrderStatus.CANCELLED, Set.of(Constants.Role.ADMIN, Constants.Role.STAFF)
             ),
             Constants.OrderStatus.PREPARING, Map.of(
-                    Constants.OrderStatus.READY_FOR_SHIPPING, Set.of(Constants.Role.STAFF),
-                    Constants.OrderStatus.CANCELLED, Set.of(Constants.Role.ADMIN)
+                    Constants.OrderStatus.READY_FOR_SHIPPING, Set.of(Constants.Role.STAFF)
             ),
             Constants.OrderStatus.READY_FOR_SHIPPING, Map.of(
                     Constants.OrderStatus.SHIPPING, Set.of(Constants.Role.SHIPPER)
@@ -107,14 +115,12 @@ public class OrderService {
         return ApiResponseFactory.success(Constants.Message.Order.CREATE_SUCCESS);
     }
 
+    @Transactional
     public BaseResultDTO<Void> updateStatus(Long orderId, String status, String actorRole) {
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(
-                        "Order not found",
-                        Constants.ErrorCode.Order.UPDATE_NOT_FOUND
-                ));
+        Order order = findOrderOrThrow(orderId);
         validateStatusTransition(order.getStatus(), status, actorRole);
+        validateShipperOwnership(order, actorRole);
 
         order.setStatus(status);
         if (Constants.OrderStatus.SHIPPING.equals(status)) {
@@ -128,10 +134,45 @@ public class OrderService {
         return ApiResponseFactory.success(resolveUpdateStatusMessage(status));
     }
 
+    @Transactional
+    public BaseResultDTO<Void> assignShipper(Long orderId, AssignShipperRequest request) {
+        ensureCurrentUserHasRole(Constants.Role.STAFF);
+
+        Order order = findOrderOrThrow(orderId);
+        if (!Constants.OrderStatus.READY_FOR_SHIPPING.equals(order.getStatus())) {
+            throw new AppException(
+                    "Order can only be assigned when it is READY_FOR_SHIPPING",
+                    Constants.ErrorCode.Order.UPDATE_INVALID_STATUS
+            );
+        }
+
+        User shipper = userRepository.findById(request.getShipperId())
+                .orElseThrow(() -> new AppException(
+                        "Shipper not found",
+                        Constants.ErrorCode.Order.ASSIGN_SHIPPER_INVALID
+                ));
+
+        boolean isShipper = shipper.getRoles()
+                .stream()
+                .anyMatch(role -> Constants.Role.SHIPPER.equals(role.getName()));
+        if (!isShipper) {
+            throw new AppException(
+                    "Assigned user is not a shipper",
+                    Constants.ErrorCode.Order.ASSIGN_SHIPPER_INVALID
+            );
+        }
+
+        order.setShipper(shipper);
+        orderRepository.save(order);
+        return ApiResponseFactory.success(Constants.Message.Order.ASSIGN_SHIPPER_SUCCESS);
+    }
+
     private void validateStatusTransition(
             String currentStatus,
             String nextStatus,
             String actorRole) {
+
+        ensureCurrentUserHasRole(actorRole);
 
         Map<String, Set<String>> nextStatusMap = ORDER_STATUS_RULES.get(currentStatus);
 
@@ -151,12 +192,103 @@ public class OrderService {
         }
     }
 
-    public BaseResultDTO<List<Order>> getUserOrders() {
+    public BaseResultDTO<List<OrderWorkflowResponse>> getUserOrders() {
         Long userId = SecurityUtils.getCurrentUserId();
         return ApiResponseFactory.success(
                 Constants.Message.Order.GET_SUCCESS,
-                orderRepository.findByUserId(userId)
+                orderRepository.findByUserIdOrderByOrderDateDesc(userId)
+                        .stream()
+                        .map(OrderWorkflowResponse::from)
+                        .toList()
         );
+    }
+
+    public BaseResultDTO<List<OrderWorkflowResponse>> getStaffOrders() {
+        ensureCurrentUserHasRole(Constants.Role.STAFF);
+        List<String> statuses = List.of(
+                Constants.OrderStatus.CREATED,
+                Constants.OrderStatus.PENDING,
+                Constants.OrderStatus.CONFIRMED,
+                Constants.OrderStatus.PREPARING,
+                Constants.OrderStatus.READY_FOR_SHIPPING
+        );
+        return ApiResponseFactory.success(
+                Constants.Message.Order.GET_SUCCESS,
+                orderRepository.findByStatusInOrderByOrderDateDesc(statuses)
+                        .stream()
+                        .map(OrderWorkflowResponse::from)
+                        .toList()
+        );
+    }
+
+    public BaseResultDTO<List<OrderWorkflowResponse>> getShipperOrders() {
+        ensureCurrentUserHasRole(Constants.Role.SHIPPER);
+        Long shipperId = SecurityUtils.getCurrentUserId();
+        return ApiResponseFactory.success(
+                Constants.Message.Order.GET_SUCCESS,
+                orderRepository.findByShipperIdAndStatusInOrderByOrderDateDesc(
+                                shipperId,
+                                List.of(Constants.OrderStatus.READY_FOR_SHIPPING, Constants.OrderStatus.SHIPPING)
+                        ).stream()
+                        .map(OrderWorkflowResponse::from)
+                        .toList()
+        );
+    }
+
+    public BaseResultDTO<List<OrderWorkflowResponse>> getAdminOrders(String status, Long shipperId, LocalDate date) {
+        ensureCurrentUserHasRole(Constants.Role.ADMIN);
+        LocalDateTime fromDate = date != null ? date.atStartOfDay() : null;
+        LocalDateTime toDate = date != null ? date.plusDays(1).atStartOfDay() : null;
+        return ApiResponseFactory.success(
+                Constants.Message.Order.GET_SUCCESS,
+                orderRepository.searchForAdmin(status, shipperId, fromDate, toDate)
+                        .stream()
+                        .map(OrderWorkflowResponse::from)
+                        .toList()
+        );
+    }
+
+    public BaseResultDTO<List<UserSummaryResponse>> getAssignableShippers() {
+        ensureCurrentUserHasRole(Constants.Role.STAFF);
+        return ApiResponseFactory.success(
+                Constants.Message.Order.GET_SUCCESS,
+                userRepository.findAll()
+                        .stream()
+                        .filter(user -> user.getRoles().stream().anyMatch(role -> Constants.Role.SHIPPER.equals(role.getName())))
+                        .map(UserSummaryResponse::from)
+                        .toList()
+        );
+    }
+
+    private Order findOrderOrThrow(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(
+                        "Order not found",
+                        Constants.ErrorCode.Order.UPDATE_NOT_FOUND
+                ));
+    }
+
+    private void ensureCurrentUserHasRole(String role) {
+        if (!SecurityUtils.hasRole(role)) {
+            throw new AppException(
+                    "Current user is not allowed to perform this action",
+                    Constants.ErrorCode.Order.UPDATE_INVALID_STATUS
+            );
+        }
+    }
+
+    private void validateShipperOwnership(Order order, String actorRole) {
+        if (!Constants.Role.SHIPPER.equals(actorRole)) {
+            return;
+        }
+
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        if (order.getShipper() == null || !currentUserId.equals(order.getShipper().getId())) {
+            throw new AppException(
+                    "This order is not assigned to the current shipper",
+                    Constants.ErrorCode.Order.UPDATE_INVALID_STATUS
+            );
+        }
     }
 
     private String resolveUpdateStatusMessage(String status) {

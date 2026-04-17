@@ -1,15 +1,17 @@
 package com.example.eStore.controller;
 
 import com.example.eStore.dto.BaseResultDTO;
-import com.example.eStore.dto.constants.Constants;
 import com.example.eStore.dto.request.AdminUserUpsertRequest;
+import com.example.eStore.dto.response.OrderWorkflowResponse;
 import com.example.eStore.dto.response.UserResponse;
 import com.example.eStore.service.OrderService;
 import com.example.eStore.service.UserManagementService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -20,16 +22,12 @@ public class AdminController {
     private final OrderService orderService;
     private final UserManagementService userManagementService;
 
-    @PutMapping("/orders/confirm/{id}")
-    public ResponseEntity<BaseResultDTO<Void>> confirm(@PathVariable Long id) {
-        return ResponseEntity.ok(
-                orderService.updateStatus(id, Constants.OrderStatus.CONFIRMED, Constants.Role.ADMIN));
-    }
-
-    @PutMapping("/orders/cancel/{id}")
-    public ResponseEntity<BaseResultDTO<Void>> cancel(@PathVariable Long id) {
-        return ResponseEntity.ok(
-                orderService.updateStatus(id, Constants.OrderStatus.CANCELLED, Constants.Role.ADMIN));
+    @GetMapping("/orders")
+    public ResponseEntity<BaseResultDTO<List<OrderWorkflowResponse>>> getOrders(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long shipperId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(orderService.getAdminOrders(status, shipperId, date));
     }
 
     @GetMapping("/users")

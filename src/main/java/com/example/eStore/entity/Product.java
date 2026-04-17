@@ -44,4 +44,23 @@ public class Product {
     @OneToMany(mappedBy = "product")
     @JsonManagedReference
     private List<ProductImage> images;
+
+    public String getThumbnailUrl() {
+        if (images == null || images.isEmpty()) {
+            return null;
+        }
+
+        // 1. Get image with isThumbnail = true
+        return images.stream()
+                .filter(img -> Boolean.TRUE.equals(img.getIsThumbnail()))
+                .findFirst()
+                // 2. Otherwise get image with smallest sortOrder
+                .or(() -> images.stream()
+                        .filter(img -> img.getSortOrder() != null)
+                        .min(java.util.Comparator.comparing(ProductImage::getSortOrder)))
+                // 3. Fallback to first image if no thumbnail or sortOrder found
+                .or(() -> images.stream().findFirst())
+                .map(ProductImage::getImageUrl)
+                .orElse(null);
+    }
 }
