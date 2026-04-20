@@ -11,5 +11,6 @@ public class CreateOrderRequest {
     private String receiverPhone;
     private String receiverAddress;
     private String note;
+    private Long userVoucherId;
     private List<CartItemRequest> items;
 }

@@ -11,6 +11,22 @@ public interface Constants {
         String CANCELLED = "CANCELLED";
     }
 
+    interface VoucherStatus {
+        String AVAILABLE = "AVAILABLE";
+        String USED = "USED";
+        String EXPIRED = "EXPIRED";
+    }
+
+    interface DiscountType {
+        String PERCENTAGE = "PERCENTAGE";
+        String FIXED = "FIXED";
+    }
+
+    interface VoucherAction {
+        String USED = "USED";
+        String CANCELLED = "CANCELLED";
+    }
+
     interface Role {
         String ADMIN = "ROLE_ADMIN";
         String STAFF = "ROLE_STAFF";
@@ -57,6 +73,19 @@ public interface Constants {
             String ASSIGN_SHIPPER_INVALID = "ORDER_ASSIGN_SHIPPER_INVALID";
         }
 
+        interface Voucher {
+            String TEMPLATE_NOT_FOUND = "VOUCHER_TEMPLATE_NOT_FOUND";
+            String CODE_EXISTS = "VOUCHER_CODE_EXISTS";
+            String USER_NOT_FOUND = "VOUCHER_USER_NOT_FOUND";
+            String USER_VOUCHER_NOT_FOUND = "VOUCHER_USER_VOUCHER_NOT_FOUND";
+            String NOT_OWNED = "VOUCHER_NOT_OWNED";
+            String NOT_AVAILABLE = "VOUCHER_NOT_AVAILABLE";
+            String EXPIRED = "VOUCHER_EXPIRED";
+            String INACTIVE = "VOUCHER_INACTIVE";
+            String MIN_VALUE_NOT_MET = "VOUCHER_MIN_VALUE_NOT_MET";
+            String START_DATE_NOT_REACHED = "VOUCHER_START_DATE_NOT_REACHED";
+        }
+
         interface Product {
             String CREATE_CATEGORY_NOT_FOUND = "PRODUCT_CREATE_CATEGORY_NOT_FOUND";
             String CREATE_BRAND_NOT_FOUND = "PRODUCT_CREATE_BRAND_NOT_FOUND";
@@ -65,6 +94,14 @@ public interface Constants {
             String UPDATE_CATEGORY_NOT_FOUND = "PRODUCT_UPDATE_CATEGORY_NOT_FOUND";
             String UPDATE_BRAND_NOT_FOUND = "PRODUCT_UPDATE_BRAND_NOT_FOUND";
             String DELETE_NOT_FOUND = "PRODUCT_DELETE_NOT_FOUND";
+        }
+
+        interface Review {
+            String PRODUCT_NOT_FOUND = "REVIEW_PRODUCT_NOT_FOUND";
+            String NOT_PURCHASED = "REVIEW_NOT_PURCHASED";
+            String ALREADY_REVIEWED = "REVIEW_ALREADY_REVIEWED";
+            String NOT_FOUND = "REVIEW_NOT_FOUND";
+            String NOT_OWNER = "REVIEW_NOT_OWNER";
         }
 
         interface Contact {
@@ -104,6 +141,20 @@ public interface Constants {
             String GET_DETAIL_SUCCESS = "Get product detail successfully";
             String UPDATE_SUCCESS = "Update product successfully";
             String DELETE_SUCCESS = "Delete product successfully";
+        }
+
+        interface Voucher {
+            String CREATE_SUCCESS = "Create voucher template successfully";
+            String ASSIGN_SUCCESS = "Assign voucher to user successfully";
+            String APPLY_SUCCESS = "Apply voucher successfully";
+            String GET_SUCCESS = "Get vouchers successfully";
+        }
+
+        interface Review {
+            String CREATE_SUCCESS = "Review submitted successfully";
+            String UPDATE_SUCCESS = "Review updated successfully";
+            String DELETE_SUCCESS = "Review deleted successfully";
+            String GET_SUCCESS = "Get reviews successfully";
         }
 
         interface Contact {

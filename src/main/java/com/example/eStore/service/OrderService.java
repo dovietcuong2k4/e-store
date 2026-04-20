@@ -22,8 +22,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -55,17 +53,20 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderHistoryRepository orderHistoryRepository;
+    private final VoucherService voucherService;
+    private final UserVoucherRepository userVoucherRepository;
 
     @Transactional
     public BaseResultDTO<CreateOrderResponse> createOrder(CreateOrderRequest request) {
         Long userId = SecurityUtils.getCurrentUserId();
 
         Order order = new Order();
-        order.setUser(userRepository.findById(userId)
+        User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(
                         "User not found",
                         Constants.ErrorCode.Order.CREATE_USER_NOT_FOUND
-                )));
+                ));
+        order.setUser(currentUser);
         
         order.setReceiverName(request.getReceiverName());
         order.setReceiverPhone(request.getReceiverPhone());
@@ -91,6 +92,7 @@ public class OrderService {
             );
         }
 
+        long originalTotalPrice = 0;
         for (CartItem item : cartItems) {
             Product product = productRepository.findByIdWithLock(item.getProduct().getId())
                     .orElseThrow(() -> new AppException(
@@ -115,6 +117,28 @@ public class OrderService {
             orderItem.setQuantity(item.getQuantity());
             orderItem.setPrice(product.getPrice());
             orderItemRepository.save(orderItem);
+            
+            originalTotalPrice += product.getPrice() * item.getQuantity();
+        }
+
+        // Apply voucher if present: compute discount first; mark USED only after order is saved
+        if (request.getUserVoucherId() != null) {
+            long discount = voucherService.validateAndComputeDiscount(
+                    request.getUserVoucherId(),
+                    originalTotalPrice,
+                    userId,
+                    true
+            );
+            order.setDiscountAmount(discount);
+            order.setUserVoucher(userVoucherRepository.getReferenceById(request.getUserVoucherId()));
+        } else {
+            order.setDiscountAmount(0L);
+        }
+
+        orderRepository.save(order);
+
+        if (request.getUserVoucherId() != null) {
+            voucherService.finalizeVoucherUsage(request.getUserVoucherId(), order.getId(), userId);
         }
 
         cartItemRepository.deleteAll(cartItems);
@@ -163,6 +187,17 @@ public class OrderService {
                 .changedBy(actorRole + " (" + SecurityUtils.getCurrentUserId() + ")")
                 .changedAt(LocalDateTime.now())
                 .build());
+
+        // Log voucher cancellation if applicable
+        if (Constants.OrderStatus.CANCELLED.equals(status) && order.getUserVoucher() != null) {
+            voucherService.logVoucherUsage(
+                    order.getUserVoucher().getVoucher().getId(),
+                    order.getUser().getId(),
+                    order.getId(),
+                    Constants.VoucherAction.CANCELLED,
+                    "Order #" + orderId + " cancelled. Voucher remains USED."
+            );
+        }
 
         return ApiResponseFactory.success(resolveUpdateStatusMessage(status));
     }

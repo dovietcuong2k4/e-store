@@ -22,15 +22,18 @@ public class OrderWorkflowResponse {
     private LocalDateTime receivedDate;
     private String status;
     private Long totalPrice;
+    private Long discountAmount;
     private List<OrderItemResponse> orderItems;
 
     public static OrderWorkflowResponse from(Order entity) {
         List<OrderItemResponse> items = entity.getOrderItems() == null
                 ? List.of()
                 : entity.getOrderItems().stream().map(OrderItemResponse::from).toList();
-        long totalPrice = items.stream()
+        long originalPrice = items.stream()
                 .mapToLong(item -> item.getPrice() * item.getQuantity())
                 .sum();
+        
+        long discount = entity.getDiscountAmount() != null ? entity.getDiscountAmount() : 0L;
 
         return OrderWorkflowResponse.builder()
                 .id(entity.getId())
@@ -44,7 +47,8 @@ public class OrderWorkflowResponse {
                 .shippingDate(entity.getShippingDate())
                 .receivedDate(entity.getReceivedDate())
                 .status(entity.getStatus())
-                .totalPrice(totalPrice)
+                .totalPrice(originalPrice - discount)
+                .discountAmount(discount)
                 .orderItems(items)
                 .build();
     }

@@ -43,6 +43,10 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/products/**")
                                 .permitAll()
 
+                                // ===== REVIEW =====
+                                .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                                .requestMatchers("/api/reviews/**").authenticated()
+
                                 .requestMatchers(HttpMethod.POST, "/api/products/**")
                                 .hasAnyRole("ADMIN", "STAFF")
 
@@ -72,7 +76,10 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.DELETE, "/api/brands/**")
                                 .hasRole("ADMIN")
 
-                                // ===== ADMIN =====
+                                // ===== ADMIN (vouchers: staff may create/assign; other /api/admin/** is admin-only) =====
+                                .requestMatchers("/api/admin/vouchers", "/api/admin/vouchers/**")
+                                .hasAnyRole("ADMIN", "STAFF")
+
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                                 // ===== STAFF =====

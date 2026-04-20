@@ -41,4 +41,10 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<OrderItem> orderItems;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_voucher_id")
+    private UserVoucher userVoucher;
+
+    private Long discountAmount;
 }
