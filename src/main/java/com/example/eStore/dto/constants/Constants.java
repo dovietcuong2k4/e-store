@@ -49,6 +49,15 @@ public interface Constants {
             String ADMIN_DELETE_NOT_FOUND = "USER_ADMIN_DELETE_NOT_FOUND";
         }
 
+        interface Profile {
+            String NOT_FOUND = "PROFILE_NOT_FOUND";
+            String FIELD_NOT_SUPPORTED = "PROFILE_FIELD_NOT_SUPPORTED";
+            String FIELD_NOT_EDITABLE = "PROFILE_FIELD_NOT_EDITABLE";
+            String INVALID_FULL_NAME = "PROFILE_INVALID_FULL_NAME";
+            String INVALID_PHONE = "PROFILE_INVALID_PHONE";
+            String INVALID_ADDRESS = "PROFILE_INVALID_ADDRESS";
+        }
+
         interface Security {
             String UNAUTHENTICATED = "SECURITY_UNAUTHENTICATED";
         }
@@ -168,6 +177,11 @@ public interface Constants {
             String ADMIN_CREATE_SUCCESS = "Create user successfully";
             String ADMIN_UPDATE_SUCCESS = "Update user successfully";
             String ADMIN_DELETE_SUCCESS = "Delete user successfully";
+        }
+
+        interface Profile {
+            String GET_SUCCESS = "Get profile successfully";
+            String UPDATE_SUCCESS = "Update profile successfully";
         }
     }
 }
