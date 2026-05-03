@@ -168,6 +168,7 @@ public interface Constants {
 
         interface Contact {
             String SEND_SUCCESS = "Contact sent successfully";
+            String GET_ALL_CONTACTS_SUCCESS = "Get all contacts successfully";
         }
 
         interface User {
