@@ -37,6 +37,15 @@ public class Order {
     private LocalDateTime shippingDate;
     private LocalDateTime receivedDate;
     private String status;
+    private String paymentMethod;
+    private String paymentStatus;
+    private String paymentTxnRef;
+    private String paymentTransactionNo;
+    private String paymentBankCode;
+    private String paymentResponseCode;
+    private String paymentTransactionStatus;
+    private String paymentPayDate;
+    private LocalDateTime paymentCompletedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     @JsonManagedReference

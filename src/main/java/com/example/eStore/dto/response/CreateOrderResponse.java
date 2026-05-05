@@ -9,4 +9,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateOrderResponse {
     private Long id;
+    private String paymentMethod;
+    private String paymentStatus;
+    private String paymentUrl;
+
+    public CreateOrderResponse(Long id) {
+        this.id = id;
+    }
 }

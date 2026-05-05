@@ -21,6 +21,14 @@ public class OrderWorkflowResponse {
     private LocalDateTime shippingDate;
     private LocalDateTime receivedDate;
     private String status;
+    private String paymentMethod;
+    private String paymentStatus;
+    private String paymentTransactionNo;
+    private String paymentBankCode;
+    private String paymentResponseCode;
+    private String paymentTransactionStatus;
+    private String paymentPayDate;
+    private LocalDateTime paymentCompletedAt;
     private Long totalPrice;
     private Long discountAmount;
     private List<OrderItemResponse> orderItems;
@@ -47,6 +55,14 @@ public class OrderWorkflowResponse {
                 .shippingDate(entity.getShippingDate())
                 .receivedDate(entity.getReceivedDate())
                 .status(entity.getStatus())
+                .paymentMethod(entity.getPaymentMethod())
+                .paymentStatus(entity.getPaymentStatus())
+                .paymentTransactionNo(entity.getPaymentTransactionNo())
+                .paymentBankCode(entity.getPaymentBankCode())
+                .paymentResponseCode(entity.getPaymentResponseCode())
+                .paymentTransactionStatus(entity.getPaymentTransactionStatus())
+                .paymentPayDate(entity.getPaymentPayDate())
+                .paymentCompletedAt(entity.getPaymentCompletedAt())
                 .totalPrice(originalPrice - discount)
                 .discountAmount(discount)
                 .orderItems(items)

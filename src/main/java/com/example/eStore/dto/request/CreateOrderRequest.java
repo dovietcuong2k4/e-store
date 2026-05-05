@@ -12,5 +12,7 @@ public class CreateOrderRequest {
     private String receiverAddress;
     private String note;
     private Long userVoucherId;
+    private String paymentMethod;
+    private String bankCode;
     private List<CartItemRequest> items;
 }

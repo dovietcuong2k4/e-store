@@ -38,6 +38,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/orders/access/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/payments/vnpay/**").permitAll()
 
                                 // ===== PRODUCT =====
                                 .requestMatchers(HttpMethod.GET, "/api/products/**")

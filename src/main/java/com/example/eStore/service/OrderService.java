@@ -55,9 +55,20 @@ public class OrderService {
     private final OrderHistoryRepository orderHistoryRepository;
     private final VoucherService voucherService;
     private final UserVoucherRepository userVoucherRepository;
+    private final VnpayPaymentService vnpayPaymentService;
 
     @Transactional
     public BaseResultDTO<CreateOrderResponse> createOrder(CreateOrderRequest request) {
+        return createOrder(request, null);
+    }
+
+    @Transactional
+    public BaseResultDTO<CreateOrderResponse> createOrder(CreateOrderRequest request, String clientIp) {
+        String paymentMethod = normalizePaymentMethod(request.getPaymentMethod());
+        if (Constants.PaymentMethod.VNPAY.equals(paymentMethod)) {
+            vnpayPaymentService.ensureConfigured();
+        }
+
         Long userId = SecurityUtils.getCurrentUserId();
 
         Order order = new Order();
@@ -74,6 +85,10 @@ public class OrderService {
         order.setNote(request.getNote());
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(Constants.OrderStatus.CREATED);
+        order.setPaymentMethod(paymentMethod);
+        order.setPaymentStatus(Constants.PaymentMethod.VNPAY.equals(paymentMethod)
+                ? Constants.PaymentStatus.PENDING
+                : Constants.PaymentStatus.UNPAID);
 
         orderRepository.save(order);
 
@@ -136,6 +151,7 @@ public class OrderService {
         }
 
         orderRepository.save(order);
+        order.setPaymentTxnRef(String.valueOf(order.getId()));
 
         if (request.getUserVoucherId() != null) {
             voucherService.finalizeVoucherUsage(request.getUserVoucherId(), order.getId(), userId);
@@ -154,9 +170,19 @@ public class OrderService {
                 .changedAt(LocalDateTime.now())
                 .build());
 
+        long finalTotalPrice = Math.max(0L, originalTotalPrice - (order.getDiscountAmount() != null ? order.getDiscountAmount() : 0L));
+        CreateOrderResponse response = new CreateOrderResponse(order.getId());
+        response.setPaymentMethod(order.getPaymentMethod());
+        response.setPaymentStatus(order.getPaymentStatus());
+
+        if (Constants.PaymentMethod.VNPAY.equals(paymentMethod)) {
+            response.setPaymentUrl(vnpayPaymentService.createPaymentUrl(order, finalTotalPrice, request.getBankCode(), clientIp));
+            orderRepository.save(order);
+        }
+
         return ApiResponseFactory.success(
             Constants.Message.Order.CREATE_SUCCESS,
-            new CreateOrderResponse(order.getId())
+            response
         );
     }
 
@@ -371,6 +397,22 @@ public class OrderService {
                     Constants.ErrorCode.Order.UPDATE_INVALID_STATUS
             );
         }
+    }
+
+    private String normalizePaymentMethod(String paymentMethod) {
+        if (paymentMethod == null || paymentMethod.isBlank()) {
+            return Constants.PaymentMethod.COD;
+        }
+
+        String normalized = paymentMethod.trim().toUpperCase();
+        if (Constants.PaymentMethod.COD.equals(normalized) || Constants.PaymentMethod.VNPAY.equals(normalized)) {
+            return normalized;
+        }
+
+        throw new AppException(
+                "Unsupported payment method: " + paymentMethod,
+                Constants.ErrorCode.Payment.INVALID_METHOD
+        );
     }
 
     private String resolveUpdateStatusMessage(String status) {

@@ -27,6 +27,18 @@ public interface Constants {
         String CANCELLED = "CANCELLED";
     }
 
+    interface PaymentMethod {
+        String COD = "COD";
+        String VNPAY = "VNPAY";
+    }
+
+    interface PaymentStatus {
+        String UNPAID = "UNPAID";
+        String PENDING = "PENDING";
+        String PAID = "PAID";
+        String FAILED = "FAILED";
+    }
+
     interface Role {
         String ADMIN = "ROLE_ADMIN";
         String STAFF = "ROLE_STAFF";
@@ -80,6 +92,15 @@ public interface Constants {
             String CANCEL_NOT_ALLOWED = "ORDER_CANCEL_NOT_ALLOWED";
             String GET_BY_USER_FAILED = "ORDER_GET_BY_USER_FAILED";
             String ASSIGN_SHIPPER_INVALID = "ORDER_ASSIGN_SHIPPER_INVALID";
+        }
+
+        interface Payment {
+            String INVALID_METHOD = "PAYMENT_INVALID_METHOD";
+            String CONFIG_MISSING = "PAYMENT_CONFIG_MISSING";
+            String INVALID_SIGNATURE = "PAYMENT_INVALID_SIGNATURE";
+            String ORDER_NOT_FOUND = "PAYMENT_ORDER_NOT_FOUND";
+            String INVALID_AMOUNT = "PAYMENT_INVALID_AMOUNT";
+            String INVALID_TRANSACTION = "PAYMENT_INVALID_TRANSACTION";
         }
 
         interface Voucher {
@@ -142,6 +163,11 @@ public interface Constants {
             String DELIVERY_FAILED = "Delivery failed";
             String CANCEL_SUCCESS = "Order cancelled successfully";
             String ASSIGN_SHIPPER_SUCCESS = "Shipper assigned successfully";
+        }
+
+        interface Payment {
+            String VNPAY_RETURN_SUCCESS = "VNPAY payment verified";
+            String VNPAY_RETURN_FAILED = "VNPAY payment failed";
         }
 
         interface Product {
