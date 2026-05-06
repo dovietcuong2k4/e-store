@@ -3,6 +3,8 @@ package com.example.eStore.repository;
 import com.example.eStore.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +21,25 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findByIdWithLock(Long id);
+
+    @Query("SELECT p FROM Product p WHERE "
+            + "(:keyword IS NULL OR ("
+            + "LOWER(COALESCE(p.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+            + "LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+            + "LOWER(COALESCE(p.cpu, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+            + "LOWER(COALESCE(p.ram, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+            + "LOWER(COALESCE(p.screen, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+            + "LOWER(COALESCE(p.operatingSystem, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+            + "LOWER(COALESCE(p.design, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+            + "LOWER(COALESCE(p.category.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+            + "LOWER(COALESCE(p.brand.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))"
+            + ")) "
+            + "AND (:category IS NULL OR LOWER(p.category.name) = LOWER(:category)) "
+            + "AND (:minPrice IS NULL OR p.price >= :minPrice) "
+            + "AND (:maxPrice IS NULL OR p.price <= :maxPrice)")
+    List<Product> search(@Param("keyword") String keyword,
+                         @Param("category") String category,
+                         @Param("minPrice") Long minPrice,
+                         @Param("maxPrice") Long maxPrice,
+                         Pageable pageable);
 }

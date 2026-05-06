@@ -37,6 +37,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/chatbot/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/orders/access/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/payments/vnpay/**").permitAll()
 
