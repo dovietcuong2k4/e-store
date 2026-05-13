@@ -11,10 +11,8 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChatbotResponse {
-    private String answer;
-    private List<ChatbotProductSuggestionResponse> suggestions;
+public class ProductRecommendationResponse {
+    private List<RecommendedProductDTO> recommendations;
     private boolean aiEnabled;
-    private String intent;
-    private String responseType;
+    private String message;
 }

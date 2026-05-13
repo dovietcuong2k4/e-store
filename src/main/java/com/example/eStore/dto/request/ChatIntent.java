@@ -16,6 +16,7 @@ public class ChatIntent {
     private String intent;
     private List<String> productNames;
     private String category;
+    private String brand;
     private Long minPrice;
     private Long maxPrice;
     private String usage;

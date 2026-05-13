@@ -15,7 +15,8 @@ import com.example.eStore.repository.BrandRepository;
 import com.example.eStore.repository.CategoryRepository;
 import com.example.eStore.repository.ProductImageRepository;
 import com.example.eStore.repository.ProductRepository;
-import com.example.eStore.dto.request.ProductImageRequest;
+import com.example.eStore.repository.ProductReviewRepository;
+import com.example.eStore.service.OpenRouterEmbeddingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,8 @@ public class ProductService {
     private final BrandRepository brandRepository;
     private final ProductImageRepository productImageRepository;
     private final FileUploadService fileUploadService;
+    private final OpenRouterEmbeddingService openRouterEmbeddingService;
+    private final ProductReviewRepository productReviewRepository;
 
     public BaseResultDTO<ProductResponse> create(ProductRequest request) {
 
@@ -80,6 +83,9 @@ public class ProductService {
             productImageRepository.saveAll(productImages);
             product.setImages(productImages);
         }
+
+        refreshEmbedding(product);
+        productRepository.save(product);
 
         return ApiResponseFactory.success(
                 Constants.Message.Product.CREATE_SUCCESS,
@@ -181,6 +187,9 @@ public class ProductService {
             product.setImages(List.of());
         }
 
+        refreshEmbedding(product);
+        productRepository.save(product);
+
         // Delete from Cloudinary after DB operations
         publicIdsToDelete.forEach(fileUploadService::deleteFile);
 
@@ -228,6 +237,9 @@ public class ProductService {
                         .build())
                 .toList();
 
+        Double rating = productReviewRepository.getAverageRatingByProductId(p.getId());
+        long reviewCount = productReviewRepository.countByProductId(p.getId());
+
         return ProductResponse.builder()
                 .id(p.getId())
                 .name(p.getName())
@@ -242,11 +254,21 @@ public class ProductService {
                 .description(p.getDescription())
                 .soldQuantity(p.getSoldQuantity())
                 .stockQuantity(p.getStockQuantity())
+                .rating(rating)
+                .reviewCount(reviewCount)
                 .categoryId(p.getCategory() != null ? p.getCategory().getId() : null)
                 .categoryName(p.getCategory() != null ? p.getCategory().getName() : null)
                 .brandId(p.getBrand() != null ? p.getBrand().getId() : null)
                 .brandName(p.getBrand() != null ? p.getBrand().getName() : null)
                 .images(images)
                 .build();
+    }
+
+    private void refreshEmbedding(Product product) {
+        try {
+            product.setEmbeddingJson(openRouterEmbeddingService.buildEmbeddingJson(product));
+        } catch (Exception exception) {
+            product.setEmbeddingJson(null);
+        }
     }
 }

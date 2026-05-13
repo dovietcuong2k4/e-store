@@ -21,8 +21,11 @@ public class ProductResponse {
     private String design;
     private String warrantyInfo;
     private String description;
+    private Double semanticScore;
     private Integer soldQuantity;
     private Integer stockQuantity;
+    private Double rating;
+    private Long reviewCount;
 
     private Long categoryId;
     private String categoryName;
@@ -44,6 +47,7 @@ public class ProductResponse {
                 .design(entity.getDesign())
                 .warrantyInfo(entity.getWarrantyInfo())
                 .description(entity.getDescription())
+                .semanticScore(null)
                 .soldQuantity(entity.getSoldQuantity())
                 .stockQuantity(entity.getStockQuantity())
                 .categoryId(entity.getCategory() != null ? entity.getCategory().getId() : null)

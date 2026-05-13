@@ -1,7 +1,9 @@
 package com.example.eStore.service;
 
-import com.example.eStore.config.OpenAiProperties;
+import com.example.eStore.config.OpenRouterProperties;
 import com.example.eStore.dto.request.ChatIntent;
+import com.example.eStore.entity.Brand;
+import com.example.eStore.repository.BrandRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.net.http.HttpResponse;
 import java.text.Normalizer;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -28,8 +31,8 @@ import java.util.regex.Pattern;
 @Slf4j
 @RequiredArgsConstructor
 public class IntentParser {
-    private static final Pattern RANGE_PRICE_PATTERN = Pattern.compile("(\\d+(?:[\\.,]\\d+)?)\\s*(?:-|den|toi)\\s*(\\d+(?:[\\.,]\\d+)?)\\s*(trieu|tr|m|k|nghin)?", Pattern.CASE_INSENSITIVE);
-    private static final Pattern PRICE_PATTERN = Pattern.compile("(\\d+(?:[\\.,]\\d+)?)\\s*(trieu|tr|m|k|nghin)?", Pattern.CASE_INSENSITIVE);
+    private static final Pattern RANGE_PRICE_PATTERN = Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s*(?:-|den|toi)\\s*(\\d+(?:[.,]\\d+)?)\\s*(trieu|tr|m|k|nghin)?", Pattern.CASE_INSENSITIVE);
+    private static final Pattern PRICE_PATTERN = Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s*(trieu|tr|m|k|nghin)?", Pattern.CASE_INSENSITIVE);
 
     private static final List<String> PRODUCT_TYPE_KEYWORDS = List.of(
             "laptop", "dien thoai", "phone", "smartphone", "may tinh", "pc", "tablet",
@@ -44,7 +47,8 @@ public class IntentParser {
             "battery", List.of("pin", "battery", "dung lau", "pin trau")
     );
 
-    private final OpenAiProperties openAiProperties;
+    private final OpenRouterProperties openRouterProperties;
+    private final BrandRepository brandRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ChatIntent parseIntent(String message) {
@@ -67,10 +71,13 @@ public class IntentParser {
             }
         }
 
+        String brand = extractBrand(normalized);
+
         return ChatIntent.builder()
                 .intent(intent)
                 .productNames(productNames)
                 .category(null)
+                .brand(brand)
                 .minPrice(priceRange.min)
                 .maxPrice(priceRange.max)
                 .usage(usage)
@@ -93,27 +100,27 @@ public class IntentParser {
 
     private ChatIntent parseIntentWithAi(String message) throws IOException, InterruptedException {
         Map<String, Object> requestBody = new LinkedHashMap<>();
-        requestBody.put("model", openAiProperties.getModel());
+        requestBody.put("model", openRouterProperties.getModel());
         requestBody.put("instructions", buildInstructions());
         requestBody.put("input", buildUserInput(message));
-        requestBody.put("max_output_tokens", Math.min(openAiProperties.getMaxOutputTokens(), 300));
+        requestBody.put("max_output_tokens", Math.min(openRouterProperties.getMaxOutputTokens(), 300));
         requestBody.put("text", Map.of("format", buildResponseFormat()));
 
         HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(openAiProperties.getTimeoutSeconds()))
+                .connectTimeout(Duration.ofSeconds(openRouterProperties.getTimeoutSeconds()))
                 .build();
 
         HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(URI.create(openAiProperties.getResponsesUrl()))
-                .timeout(Duration.ofSeconds(openAiProperties.getTimeoutSeconds()))
-                .header("Authorization", "Bearer " + openAiProperties.getApiKey())
+                .uri(URI.create(openRouterProperties.getResponsesUrl()))
+                .timeout(Duration.ofSeconds(openRouterProperties.getTimeoutSeconds()))
+                .header("Authorization", "Bearer " + openRouterProperties.getApiKey())
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
                 .build();
 
         HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new IllegalStateException("OpenAI returned HTTP " + response.statusCode() + ": " + extractErrorMessage(response.body()));
+            throw new IllegalStateException("OpenRouter returned HTTP " + response.statusCode() + ": " + extractErrorMessage(response.body()));
         }
 
         String outputText = extractOutputText(response.body());
@@ -123,6 +130,7 @@ public class IntentParser {
                 .intent(textValue(node, "intent", "recommend"))
                 .productNames(stringList(node.path("productNames")))
                 .category(nullIfBlank(textValue(node, "category", null)))
+                .brand(resolveBrandName(nullIfBlank(textValue(node, "brand", null))))
                 .minPrice(longValue(node.path("minPrice")))
                 .maxPrice(longValue(node.path("maxPrice")))
                 .usage(nullIfBlank(textValue(node, "usage", null)))
@@ -134,10 +142,11 @@ public class IntentParser {
         return """
                 You are an intent parser for an e-commerce chatbot.
                 Read the customer's message and return JSON only.
-                Map the message into: intent, productNames, category, minPrice, maxPrice, usage.
+                Map the message into: intent, productNames, category, brand, minPrice, maxPrice, usage.
                 intent must be one of: recommend, compare, product_info, faq, unknown.
                 productNames should contain explicit product types or names mentioned by the user.
                 category should be a broad store category when clear.
+                brand should capture the customer brand preference when mentioned, using a known brand name if possible.
                 usage should describe the user's purpose, such as gaming, office, design, programming, or battery.
                 Use null for minPrice and maxPrice when the user did not specify a budget.
                 Keep the response compact and do not add extra keys.
@@ -147,6 +156,11 @@ public class IntentParser {
     private String buildUserInput(String message) throws IOException {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("message", message);
+        payload.put("knownBrands", brandRepository.findAll().stream()
+                .map(Brand::getName)
+                .filter(name -> name != null && !name.isBlank())
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList());
         return objectMapper.writeValueAsString(payload);
     }
 
@@ -154,7 +168,7 @@ public class IntentParser {
         Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "object");
         schema.put("additionalProperties", false);
-        schema.put("required", List.of("intent", "productNames", "category", "minPrice", "maxPrice", "usage"));
+        schema.put("required", List.of("intent", "productNames", "category", "brand", "minPrice", "maxPrice", "usage"));
         schema.put("properties", Map.of(
                 "intent", Map.of(
                         "type", "string",
@@ -165,6 +179,9 @@ public class IntentParser {
                         "items", Map.of("type", "string")
                 ),
                 "category", Map.of(
+                        "type", List.of("string", "null")
+                ),
+                "brand", Map.of(
                         "type", List.of("string", "null")
                 ),
                 "minPrice", Map.of(
@@ -257,7 +274,7 @@ public class IntentParser {
         }
 
         if (builder.isEmpty()) {
-            throw new IllegalStateException("OpenAI response did not contain text output");
+            throw new IllegalStateException("OpenRouter response did not contain text output");
         }
 
         return builder.toString();
@@ -273,15 +290,39 @@ public class IntentParser {
     }
 
     private boolean hasApiKey() {
-        return !isBlank(openAiProperties.getApiKey());
+        return !isBlank(openRouterProperties.getApiKey());
     }
 
     private String detectIntent(String normalized) {
-        if (containsAny(normalized, "so sanh", "so sánh", "compare", "vs", "vs.")) return "compare";
-        if (containsAny(normalized, "goi y", "gợi y", "gợi ý", "recommend", "tư vấn", "suggest")) return "recommend";
-        if (containsAny(normalized, "thong tin", "thông tin", "chi tiet", "chi tiết", "có gì")) return "product_info";
-        if (containsAny(normalized, "faq", "câu hỏi", "hỏi", "how to", "bao giam")) return "faq";
-        return "recommend";
+        // Compare — most specific, check first
+        if (containsAny(normalized, "so sanh", "compare", " vs ", "vs.")) return "compare";
+
+        // FAQ — store-policy / service questions (not product-related)
+        if (containsAny(normalized, "bao hanh", "doi tra", "hoan tien", "tra hang",
+                "giao hang", "van chuyen", "phi ship", "phi van chuyen",
+                "thanh toan", "phuong thuc thanh toan", "tra gop",
+                "chinh sach", "quy dinh", "dieu khoan",
+                "lien he", "hotline", "dia chi cua hang",
+                "gio lam viec", "gio mo cua",
+                "khieu nai", "phan anh",
+                "faq", "ho tro khach hang")) return "faq";
+
+        // Product info — asking details about a specific product
+        if (containsAny(normalized, "thong tin", "chi tiet", "co gi", "cau hinh",
+                "thong so", "spec", "review", "danh gia")) return "product_info";
+
+        // Recommend — purchase advice
+        if (containsAny(normalized, "goi y", "recommend", "tu van", "suggest",
+                "nen mua", "mua gi", "chon gi", "giup minh chon",
+                "de xuat", "phu hop")) return "recommend";
+
+        // If message contains product-related context (type keyword or price), treat as recommend
+        boolean hasProductType = PRODUCT_TYPE_KEYWORDS.stream().anyMatch(normalized::contains);
+        boolean hasPrice = PRICE_PATTERN.matcher(normalized).find();
+        if (hasProductType || hasPrice) return "recommend";
+
+        // No recognisable intent
+        return "unknown";
     }
 
     private PriceRange extractPriceRange(String normalizedMessage) {
@@ -323,6 +364,31 @@ public class IntentParser {
         if (value == null) return "";
         String noAccent = Normalizer.normalize(value, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
         return noAccent.toLowerCase(Locale.ROOT);
+    }
+
+    private String extractBrand(String normalizedMessage) {
+        return brandRepository.findAll().stream()
+                .map(Brand::getName)
+                .filter(name -> name != null && !name.isBlank())
+                .sorted(Comparator.comparingInt((String name) -> normalize(name).length()).reversed())
+                .filter(name -> normalizedMessage.contains(normalize(name)))
+                .findFirst()
+                .map(this::resolveBrandName)
+                .orElse(null);
+    }
+
+    private String resolveBrandName(String candidate) {
+        if (isBlank(candidate)) {
+            return null;
+        }
+
+        String normalizedCandidate = normalize(candidate);
+        return brandRepository.findAll().stream()
+                .map(Brand::getName)
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> normalize(name).equals(normalizedCandidate))
+                .findFirst()
+                .orElse(candidate.trim());
     }
 
     private boolean containsAny(String value, String... terms) {

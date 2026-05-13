@@ -9,7 +9,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "products")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -28,6 +29,9 @@ public class Product {
     private String design;
     private String warrantyInfo;
     private String description;
+    @Lob
+    @Column(name = "product_embedding", columnDefinition = "LONGTEXT")
+    private String embeddingJson;
     private Integer soldQuantity;
     private Integer stockQuantity;
 

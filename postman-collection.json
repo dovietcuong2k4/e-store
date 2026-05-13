@@ -1,0 +1,121 @@
+{
+  "info": {
+    "_postman_id": "product-recommendation-api",
+    "name": "Product Recommendation API",
+    "description": "Collection for testing AI Product Recommendation feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Product Recommendations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:9091/api/products/1/recommendations",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9091",
+          "path": [
+            "api",
+            "products",
+            "1",
+            "recommendations"
+          ]
+        },
+        "description": "Get AI recommendations for a product\n\nPath parameter:\n- id: Product ID (1, 2, 3, etc.)\n\nResponse:\n```json\n{\n  \"recommendations\": [\n    {\n      \"productId\": 2,\n      \"productName\": \"iPhone 14\",\n      \"price\": 25000000,\n      \"thumbnailUrl\": \"https://...\",\n      \"reason\": \"Model trước đó, có hiệu suất tương đương\"\n    }\n  ],\n  \"aiEnabled\": true,\n  \"message\": \"AI đã chọn những sản phẩm tốt nhất cho bạn\"\n}\n```"
+      }
+    },
+    {
+      "name": "Get Product Detail (before recommendations)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9091/api/products/detail/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9091",
+          "path": [
+            "api",
+            "products",
+            "detail",
+            "1"
+          ]
+        },
+        "description": "Get product details before viewing recommendations"
+      }
+    },
+    {
+      "name": "Get All Products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9091/api/products?page=0&size=10",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9091",
+          "path": [
+            "api",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "10"
+            }
+          ]
+        },
+        "description": "Get list of all products"
+      }
+    },
+    {
+      "name": "Test Non-existent Product",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9091/api/products/99999/recommendations",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9091",
+          "path": [
+            "api",
+            "products",
+            "99999",
+            "recommendations"
+          ]
+        },
+        "description": "Test error handling - should return empty recommendations with message 'Sản phẩm không tồn tại'"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9091"
+    },
+    {
+      "key": "productId",
+      "value": "1"
+    }
+  ]
+}
